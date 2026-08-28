@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software or data, please cite it as below."
-title: "Physics-informed ML for Hall-Petch strengthening in FCC high-entropy alloys"
+title: "Physics-informed ML for Hall-Petch strengthening in FCC multi-principal element alloys"
 type: software
 authors:
   - family-names: Mulukutla
@@ -15,6 +15,15 @@ authors:
   - family-names: Sahu
     given-names: Bibhu Prasad
     affiliation: "Texas A&M University"
+  - family-names: Kundu
+    given-names: Joydeep
+    affiliation: "Texas A&M University"
+  - family-names: Shunmugasamy
+    given-names: Vasanth C.
+    affiliation: "Texas A&M University"
+  - family-names: Allaire
+    given-names: Douglas
+    affiliation: "Texas A&M University"
   - family-names: Karaman
     given-names: Ibrahim
     affiliation: "Texas A&M University"
@@ -23,16 +32,17 @@ authors:
     affiliation: "Texas A&M University"
 license: MIT
 keywords:
+  - multi-principal element alloys
   - high-entropy alloys
   - Hall-Petch
   - machine learning
   - symbolic regression
+  - grouped cross-validation
   - yield strength
   - hardness
-  - cross-validation
 preferred-citation:
   type: article
-  title: "Revisiting Hall-Petch strengthening in FCC high-entropy alloys: Best practices for building and auditing machine-learning strength models"
+  title: "Revisiting Hall-Petch strengthening in FCC multi-principal element alloys: Best practices for building and auditing machine learning strength models"
   authors:
     - family-names: Mulukutla
       given-names: Mrinalini
@@ -42,6 +52,12 @@ preferred-citation:
       given-names: Wenle
     - family-names: Sahu
       given-names: Bibhu Prasad
+    - family-names: Kundu
+      given-names: Joydeep
+    - family-names: Shunmugasamy
+      given-names: Vasanth C.
+    - family-names: Allaire
+      given-names: Douglas
     - family-names: Karaman
       given-names: Ibrahim
     - family-names: Arroyave

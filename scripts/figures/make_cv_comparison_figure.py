@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from _config import RESULTS_DIR, PLOTS_DIR
+import _figstyle as S
+S.apply()
 
 cv = pd.read_csv(Path(RESULTS_DIR) / 'cv_comparison.csv')
 cv['short'] = cv['Model'].str.replace(' (refit)', '', regex=False)
@@ -23,20 +25,20 @@ cv_sorted = cv.sort_values('R2_5fold', ascending=False).reset_index(drop=True)
 # ============================================================
 # 1. 3-CV grouped bar chart
 # ============================================================
-fig, ax = plt.subplots(figsize=(11, 5.5))
+fig, ax = plt.subplots(figsize=(S.W_FULL, 3.4))
 x = np.arange(len(cv_sorted))
 w = 0.27
 
 bars5f = ax.bar(x - w, cv_sorted['R2_5fold'], w, label='5-fold CV (random shuffle)',
-                color='#4c72b0', edgecolor='black')
+                color=S.LINEAR, edgecolor='black')
 barsLOO = ax.bar(x, cv_sorted['R2_LOO'], w, label='LOO (n=93)',
-                 color='#dd8452', edgecolor='black')
+                 color=S.NONLINEAR, edgecolor='black')
 barsLOBO = ax.bar(x + w, cv_sorted['R2_LOBO'], w, label='LOBO (cross-batch)',
-                  color='#55a868', edgecolor='black')
+                  color=S.OKABE['green'], edgecolor='black')
 
 ax.set_xticks(x)
-ax.set_xticklabels(cv_sorted['short'], rotation=20, ha='right', fontsize=9)
-ax.set_ylabel('R²', fontsize=11)
+ax.set_xticklabels(cv_sorted['short'], rotation=20, ha='right')
+ax.set_ylabel('R²')
 ax.set_title('Three-way CV comparison: 5-fold vs LOO vs LOBO (cross-batch)',
              fontsize=12)
 ax.axhline(0, color='black', lw=0.5)
@@ -48,8 +50,7 @@ for bars in (bars5f, barsLOO, barsLOBO):
         v = b.get_height()
         if not np.isnan(v):
             ax.annotate(f'{v:.2f}', (b.get_x() + b.get_width() / 2, v),
-                        ha='center', va='bottom', fontsize=7)
-plt.tight_layout()
+                        ha='center', va='bottom')
 plt.savefig(Path(PLOTS_DIR) / '89_cv_comparison_bars.png', dpi=150,
             bbox_inches='tight')
 plt.close()
@@ -90,19 +91,19 @@ int_lobo = [integration[n]['R2_LOBO'] if integration[n] is not None else np.nan 
 ax.bar(x - 1.5 * w, deck, w, label='provisional 5-fold (reported)',
        color='#888', edgecolor='black')
 ax.bar(x - 0.5 * w, int_5f, w, label='Integration 5-fold (live refit)',
-       color='#4c72b0', edgecolor='black')
+       color=S.LINEAR, edgecolor='black')
 ax.bar(x + 0.5 * w, int_loo, w, label='Integration LOO',
-       color='#dd8452', edgecolor='black')
+       color=S.NONLINEAR, edgecolor='black')
 ax.bar(x + 1.5 * w, int_lobo, w, label='Integration LOBO',
-       color='#55a868', edgecolor='black')
+       color=S.OKABE['green'], edgecolor='black')
 
 ax.set_xticks(x)
-ax.set_xticklabels(names, fontsize=10)
-ax.set_ylabel('R²', fontsize=11)
+ax.set_xticklabels(names)
+ax.set_ylabel('R²')
 ax.set_title('Provisional 5-fold values vs integrated LOO/LOBO re-evaluation',
              fontsize=12)
 ax.grid(axis='y', alpha=0.3)
-ax.legend(loc='lower left', fontsize=9)
+ax.legend(loc='lower left')
 ax.set_ylim(0, 1.0)
 
 # Annotate gaps
@@ -111,9 +112,7 @@ for i in range(len(names)):
         gap = deck[i] - int_lobo[i]
         ax.annotate(f'gap {gap:+.2f}',
                     (i, max(deck[i], int_5f[i]) + 0.03),
-                    ha='center', fontsize=8, color='red')
-
-plt.tight_layout()
+                    ha='center', color='red')
 plt.savefig(Path(PLOTS_DIR) / '90_provisional_vs_integrated.png', dpi=150,
             bbox_inches='tight')
 plt.close()

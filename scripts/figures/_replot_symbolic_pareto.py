@@ -32,7 +32,5 @@ ax.set_xlabel('Equation complexity (node count)')
 ax.set_ylabel('Training loss (MSE, MPa$^2$)')
 ax.set_yscale('log'); ax.grid(True, which='both', alpha=0.3)
 ax.legend(loc='upper right', framealpha=0.92); ax.set_xlim(left=0)
-
-plt.tight_layout()
 plt.savefig(OUT_FIG, dpi=200, bbox_inches='tight')
 print(f"Saved {OUT_FIG}  (single panel: loss vs complexity)")

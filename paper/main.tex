@@ -1,28 +1,24 @@
 \documentclass[5p,times,twocolumn]{elsarticle}
 
-% ============================================================
-% PACKAGES
-% ============================================================
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{siunitx}
-\usepackage{xcolor}
 \usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage[hidelinks]{hyperref}
-\usepackage{multirow}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{float}
 
 \sisetup{separate-uncertainty=true}
 \graphicspath{{figures/}}
-
-\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
-
-% Float-placement tuning: keep figures on/near the page that first cites
-% them instead of drifting toward the end of the document.
+\newcommand{\familyone}{Classical Hall-Petch}
+\newcommand{\familytwo}{Physics-derived descriptors}
+\newcommand{\familythree}{Composition/processing}
+\newcommand{\familyfour}{Non-linear ML (ARMOTE-CV)}
+\newcommand{\familyfive}{Symbolic regression}
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\bottomfraction}{0.8}
 \renewcommand{\textfraction}{0.07}
@@ -35,536 +31,493 @@
 
 \journal{Acta Materialia}
 
-% ============================================================
-% FRONT MATTER
-% ============================================================
 \begin{document}
-
 \begin{frontmatter}
 
-\title{Revisiting Hall--Petch strengthening in FCC high-entropy alloys: Best practices for building and auditing machine-learning strength models}
+\title{Revisiting Hall-Petch strengthening in FCC Multi-principal element alloys: Best practices for building and auditing machine learning strength models}
 
 \author[mse]{Mrinalini~Mulukutla\corref{cor1}}
 \ead{mrinalini.mulukutla@tamu.edu}
-\author[mse]{Shakti~Prasad~Padhy}
+\author[mae]{Shakti~Prasad~Padhy}
 \author[mse]{Wenle~Xu}
 \author[mse]{Bibhu~Prasad~Sahu}
+\author[mse]{Joydeep~Kundu}
+\author[mse]{Vasanth~C.~Shunmugasamy}
+\author[mae]{Douglas~Allaire}
 \author[mse]{Ibrahim~Karaman}
-\author[mse]{Raymundo~Arr\'{o}yave}
+\author[mse,mae]{Raymundo~Arr\'{o}yave}
 \cortext[cor1]{Corresponding author.}
-
 \affiliation[mse]{organization={Department of Materials Science and Engineering, Texas A\&M University},
-  city={College Station},
-  state={TX},
-  postcode={77843},
-  country={USA}}
+  city={College Station}, state={TX}, postcode={77843}, country={USA}}
+\affiliation[mae]{organization={J. Mike Walker '66 Department of Mechanical Engineering, Texas A\&M University},
+  city={College Station}, state={TX}, postcode={77843}, country={USA}}
 
 \begin{abstract}
-Machine-learning (ML) property models can mislead, or actively harm, alloy design when physics, descriptors, validation strategy, and deployment limits are not handled with care. We present a best-practices framework that instead uses ML to construct \emph{and} audit physics-informed models, and we demonstrate it end-to-end on the yield strength (YS) and Vickers hardness (HV) of 94 FCC high-entropy alloys in the Al--Co--Cr--Cu--Fe--Mn--Ni--V system (YS 152--544~\si{MPa}, grain size 15--212~\si{\micro\meter}). The framework is a controlled ascent in model flexibility---classical Hall--Petch, composition--processing linear models, physics-informed descriptors, a non-linear ML panel (ARMOTE-CV), and symbolic regression (PySR, SISSO)---with every tier evaluated on a shared feature ladder under 5-fold, leave-one-out (LOO), leave-one-batch-out (LOBO), and external validation. Each tier gains predictive capability and incurs a specific, named risk: faithfully implemented solid-solution-strengthening models overpredict by factors of 2--28 and become redundant once composition is present (partial $r < 0.10$); rule-of-mixtures means are inert while a grain-size-heterogeneity term ($\text{SD}_\text{grain}\cdot d^{-1/2}$) governs strengthening; LOO flatters models that LOBO exposes (XGBoost $0.729 \to 0.574$); and the best-BIC closed-form law hides a singularity that fails on independent data (external RMSE $421 \to 163$~\si{MPa} for a bounded variant). For YS, symbolic regression gives the most accurate interpretable model (PySR, LOO $R^2 = 0.77$, LOBO $R^2 = 0.67$), and three independent engines---PySR, SISSO, and a Bayesian composition-dependent Hall--Petch model---converge on the same $\text{SD}_\text{grain}\cdot d^{-1/2}$ form, which we read as genuine physics rather than a fitting artifact. For HV the same protocol correctly flags that composition overfits (all composition models LOO $R^2 \leq 0.14$) and that hardness is grain-geometry-dominated. The particular coefficients are alloy-specific; the protocol---physics-anchored feature ladders, descriptor-redundancy audits, variance-over-means descriptors, cluster-out validation, and singularity audits---is material-class-agnostic and is offered as a reusable workflow for sparse, clustered materials data.
+Machine-learning (ML) property models can mislead alloy design when interpolation is mistaken for transfer or physically motivated descriptors are interpreted as mechanisms without showing that they add information beyond the measured inputs. We present a best practices workflow that uses ML to build and audit physics-informed models of yield strength (YS) and Vickers hardness (HV) for 94 FCC multi-principal element alloy candidates. The dataset represents 82 unique compositions in the Al--Co--Cr--Cu--Fe--Mn--Ni--V system from two sequential closed-loop campaigns. Five fixed model families progress from \familyone{} through \familytwo, \familythree, \familyfour, and \familyfive. Comparisons use fold-contained preprocessing and pooled predictions from shuffled 5-fold, leave-one-out (LOO), and leave-one-batch-out (LOBO) validation, followed by a heterogeneous literature stress test and singularity audits of closed-form equations. For YS, the classical grain-size baseline gives LOO/LOBO $R^2=0.406/0.373$. The tested solid solution strengthening estimates add at most 0.002 in LOO $R^2$ once composition is present. A composition-dependent Hall--Petch intercept gives LOO/LOBO $R^2=0.652/0.625$. Adding grain-size standard deviation only as an additive term gives $0.668/0.595$, whereas allowing it to modify the Hall--Petch term gives $0.694/0.694$, the strongest verified low-complexity YS result. This improvement identifies a useful interaction within the sampled program, not an independent grain-width mechanism. At matched inputs, Lasso and LightGBM give similar YS LOBO scores (0.621 and 0.615), providing no evidence that non-linearity improves batch-level transfer. For HV, a post-selected symbolic fixed form gives LOO/LOBO $R^2=0.727/0.636$ after fold-wise coefficient refitting. The evaluated composition-dependent Hall--Petch and SISSO forms all have negative $R^2$ on the literature set of direct strength measurements. Increasing model flexibility therefore does not ensure transferable physics. Reliable property modeling requires a physical baseline, descriptor-redundancy tests, measured composition, processing, and microstructure before estimator complexity, external challenge data with explicit provenance, and equation-safety checks.
 \end{abstract}
 
 \begin{keyword}
-High-entropy alloys \sep Hall--Petch \sep Machine learning \sep Symbolic regression \sep Cross-validation \sep Hardness
+Multi-principal element alloys \sep Hall--Petch \sep Machine learning \sep Symbolic regression \sep Grouped validation \sep Hardness
 \end{keyword}
-
 \end{frontmatter}
-
-% Graphical abstract on its own page (no float mechanics, deterministic
-% placement); the Introduction always starts on the following page. At
-% submission, Elsevier also asks for this image as a separate upload.
-\onecolumn
-\vspace*{\fill}
-\begin{center}
-\includegraphics[width=0.95\textwidth]{fig_graphical_abstract.png}
-\end{center}
-\vspace*{\fill}
-\twocolumn
-
-
-
-% 
-% 1. INTRODUCTION
-% 
-
 
 \section{Introduction}
 \label{sec:intro}
 
-Multi-principal element alloys (MPEAs), including high-entropy alloys (HEAs), have emerged over the past two decades as a class of structural materials whose mechanical properties arise from cooperative interactions among multiple alloying elements in concentrated solid solutions~\cite{Cantor2004,Yeh2004,George2019}. Unlike conventional alloys built around a single principal element with dilute additions, MPEAs occupy vast compositional regions in which yield strength, ductility, and fracture resistance are jointly governed by lattice distortion, local chemical ordering, and microstructural parameters such as grain size~\cite{Miracle2017}. With eight elements, allowing non-equiatomic variants expands the search space to a continuous high-dimensional simplex containing $\gtrsim 10^9$ distinct compositions at 1~at.\% resolution, with processing variables (cold work, recrystallization temperature, hold time) adding further dimensions~\cite{Senkov2018}. Practical alloy development under these constraints increasingly relies on machine-learning (ML) surrogates trained on modest experimental datasets, and closed-loop ML-driven campaigns have begun to deliver on that promise: active learning discovered high-entropy Invar alloys after synthesizing only 17 of millions of candidates~\cite{Rao2022}, and risk-aware batch Bayesian optimization produced the dataset analyzed in this work~\cite{Mulukutla2024BIRDSHOT,Mulukutla2026BRAVE}. This reliance is exactly where the risk lies. Random-split cross-validation systematically overestimates model performance for discovery tasks, because deployment requires extrapolation to new regions of composition space while random splits test only interpolation~\cite{Meredig2018}; an ML property model that scores well under a permissive validation protocol can silently fail when deployed on new compositions, new processing routes, or new laboratories. The premise of this paper is that ML property prediction becomes \emph{misleading, or actively detrimental to a design campaign}, when four things are mishandled: the physics encoded in the features, the redundancy of chosen descriptors, the validation strategy, and the deployment limits of the fitted model. Handled carefully, the same ML machinery can instead both \emph{construct} predictive models and \emph{audit} physics-informed ones. We develop and demonstrate that dual use here.
+Multi-principal element alloys (MPEAs) span composition and processing spaces that are high dimensional and too large to explore exhaustively~\cite{Cantor2004,Yeh2004,George2019,Miracle2017}. Closed-loop machine learning (ML) can speed up this search~\cite{Rao2022,Hastings2025FCC,Mulukutla2024BIRDSHOT,Mulukutla2026BRAVE}. However, a property model becomes harmful when a good interpolation score is used to support decisions about new compositions, processing routes, or experimental campaigns. This risk is especially high for small and sparse experimental datasets that represent these very high dimensional design spaces. Nearby compositions, repeated conditions, and campaign-specific processing can make a random train/test split much easier than the intended alloy design problem~\cite{Meredig2018,WangAYT2020,LiMDHIT2024}.
 
-Grain size is the natural backbone for any strength model of polycrystalline alloys. The Hall--Petch (HP) relationship, $\sigma_y = \sigma_0 + k_\text{HP}\,d^{-1/2}$, has served as the foundational empirical description of grain-size strengthening for over seven decades~\cite{Hall1951,Petch1953}, with the $d^{-1/2}$ scaling derivable from both dislocation pile-up and geometrically-necessary-dislocation arguments~\cite{Cordero2016}. Reported HEA slopes can substantially exceed pure-FCC values, e.g., $k_\text{HP} \approx 494$~MPa$\cdot\mu$m$^{1/2}$ for CoCrFeMnNi at room temperature~\cite{Otto2013} versus ${\approx}110$--160~MPa$\cdot\mu$m$^{1/2}$ for pure Cu and Ni~\cite{Cordero2016}, although CoCrNi shows a more moderate slope accompanied by an unusually high friction stress~\cite{Yoshida2017}. Alternative scaling laws ($d^{-1}$ from source-limited arguments~\cite{Dunstan2014}, $d^{-1/3}$~\cite{Baldwin1958}, $\ln(d)/d$~\cite{Li2016HP}) coexist in the literature, often supported by curve-fit goodness-of-fit but rarely discriminated by information-theoretic comparison, and their applicability to MPEAs remains largely untested. The model FCC systems illustrate why the decomposition matters: CoCrFeMnNi combines a moderate friction stress (${\sim}125$~\si{MPa}) with a steep slope~\cite{Otto2013}, whereas CoCrNi shows a more moderate slope ($k_\text{HP} \approx 265$~MPa$\cdot\mu$m$^{1/2}$) alongside an unusually high friction stress ($\sigma_0 \approx 218$~\si{MPa}, versus ${\sim}14$~\si{MPa} for pure Ni)~\cite{Yoshida2017}. These observations raise the question, answered quantitatively at Tier~3 of this work, of whether elevated HEA intercepts and slopes reflect composition-dependent grain-boundary strengthening or a composition-dependent friction stress absorbed into the slope through fitting. Systematic friction-stress extractions across CoCrFeMnNi subsets show the intercept varying strongly with elemental combination~\cite{Yoshida2019acta}, while recent measurements show the slope itself responding to boundary chemistry: Mo grain-boundary segregation raises $k_\text{HP}$ to 1100~MPa$\cdot\mu$m$^{1/2}$ in an FCC HEA, among the largest values reported for any FCC alloy~\cite{LiKHP2024}. Disentangling the two channels therefore requires fitting them jointly, not reading either off a global regression.
+Yield strength offers a useful physical foundation. The Hall-Petch relation
+\begin{equation}
+\sigma_y=\sigma_0+k_{\mathrm{HP}}d^{-1/2}
+\label{eq:hp}
+\end{equation}
+separates a grain-size-independent intercept from the grain-boundary strengthening term~\cite{Hall1951,Petch1953,Cordero2016}. In concentrated FCC alloys, composition can influence solid-solution resistance, ordering, stacking fault energy, and boundary-mediated deformation. Hall-Petch slopes and intercepts therefore vary significantly among alloy systems~\cite{Otto2013,Yoshida2017,LiKHP2024}. Several other grain-size laws can fit a limited range of $d$ almost as well as Eq.~\eqref{eq:hp}. A good regression fit alone therefore does not completely and accurately identify the underlying microscopic mechanism.
 
-Above the grain-size backbone sits composition. The friction stress $\sigma_0$ depends on chemistry through solid-solution strengthening (SSS): the Varvenne--Leyson--Curtin (VLC) framework computes SSS from atomic-volume misfit variance~\cite{Varvenne2016,Varvenne2017}, while the Labusch and Toda-Caraballo approaches use different combinations of size and modulus misfit~\cite{Labusch1970,TodaCaraballo2015}. These models can be evaluated with Vegard's-law-interpolated inputs or with first-principles volumes~\cite{Yin2020,Moitzi2022}. Heuristic descriptor sets developed for HEA phase prediction including atomic-size mismatch $\delta$, valence electron concentration VEC, mixing enthalpy and entropy, the stability parameter $\Omega$, electronegativity mismatch, further extend the candidate feature space~\cite{Zhang2008,Yang2012,Guo2011,Troparevsky2015,Ye2015geometric,Ye2015phi}, and Wen et al.\ showed that hybrid physics--ML formulations can outperform purely physics-based SSS baselines~\cite{Wen2021SSS}. ML has been applied widely to HEA property prediction~\cite{Huang2019,Islam2022,Wen2019,Rickman2019,Khatamsaz2023,LiuPei2023}, but most mechanical-property studies share three limitations~\cite{Hart2021}: (i) composition-only descriptors without explicit grain-size effects: an omission that recent studies themselves flag as their key limitation, (ii) a narrow model panel without systematic comparison, and (iii) validation by random-split cross-validation alone, without cluster-out or external tests, despite community best-practice guidance to the contrary~\cite{WangAYT2020}. Each limitation maps onto a concrete failure mode that we measure in this work: descriptor redundancy, validation optimism, and deployment failure of closed-form models.
+Physics-based solid solution strengthening (SSS) models and composition descriptors provide compact alternatives to using unconstrained elemental fractions~\cite{Varvenne2016,Varvenne2017,Labusch1970,TodaCaraballo2015,Wen2021SSS}. However, these descriptors are calculated directly from composition and may add little information after composition is already included. Non-linear and symbolic models can capture interactions that a linear model misses, but they also search a much larger space. As a result, they can exploit campaign identity, correlated descriptors, or unstable denominators. A feature can be physically meaningful without being transferable, and an equation can be interpretable without being a validated physical law.
 
-We address these gaps with a framework that reads as a single controlled ascent in model flexibility, where each tier buys predictive capability and incurs a specific, named risk that the framework then manages:
-(1)~the universal backbone: classical Hall--Petch on grain size alone;
-(2)~composition and processing in interpretable linear models (the M-model hierarchy), revealing where the signal lives ($\sigma_0$ versus $k_\text{HP}$);
-(3)~domain physics descriptors (SSS, Wen-type, PCA), testing whether hand-built physics helps and exposing the redundancy failure mode;
-(4)~non-linear flexibility (the ARMOTE-CV panel), capturing interactions automatically and exposing the validation failure mode; and
-(5)~symbolic regression (PySR, SISSO), recovering interpretable closed-form laws and exposing the deployment failure mode.
-A validation floor runs under all five tiers---5-fold, leave-one-out (LOO), leave-one-batch-out (LOBO), and external validation, plus a singularity audit of every closed form---so that each step answers the question a practitioner in any material system must ask: did we gain, and at what risk? Figure~\ref{fig:framework} summarizes the framework.
+Hardness serves as an additional, complementary target. Vickers hardness captures the material's resistance to deformation under localized loading. The empirical Tabor relation relates hardness to a representative flow stress, rather than directly to 0.2\% offset YS~\cite{Tabor1951,Dao2001}. Applying the same modeling and validation framework to YS and HV shows whether the relevant features depend on the property being modeled.
 
-A second, equally intentional design choice is that we carry two properties: yield strength (YS) and Vickers hardness (HV), through the identical ladder, side by side.
-The two properties give opposite answers: composition is signal for YS (it shifts $\sigma_0$; our M3 model reaches LOBO $R^2 = 0.625$) but noise for HV (every composition model overfits, LOO $R^2 \leq 0.14$), where strength is instead governed by grain geometry through a grain-size-heterogeneity term $\text{SD}_\text{grain}\cdot d^{-1/2}$. A single ``universal'' model would mislead for at least one property; the fact that the same protocol exposes the contrast is itself the argument that property-specific modeling matters.
+~\autoref{fig:framework} and Table~\ref{tab:families} define the five model families used throughout this paper, with the same names and order: Family~1 (\familyone), Family~2 (\familytwo), Family~3 (\familythree), Family~4 (\familyfour), and Family~5 (\familyfive). The families ask five sequential questions: What does grain size explain? Do physics-based descriptors capture the remaining strength? What do measured composition and processing add? Does non-linearity help when inputs are matched? Can symbolic search produce useful closed forms? A higher family number does not imply greater physical fidelity. We combine this hierarchy with 5-fold CV, record-level LOO, batch-level LOBO, an external literature stress test, and singularity auditing of closed-form equations.
 
-The main contributions are:
-\begin{enumerate}
-  \item A best-practices framework: feature ladder, descriptor-redundancy audit, three-protocol cross-validation, external validation, and singularity audit, in which ML both constructs and audits physics-informed strength models. Four measured failure modes (physics, descriptors, validation, deployment) are each paired with a guardrail.
-  \item A composition-dependent Hall--Petch decomposition showing that composition enters through $\sigma_0$ and not $k_\text{HP}$ ($R^2 = 0.006$ for per-alloy $k_\text{HP}$ regression), with V the dominant strengthener ($\alpha_V = +291$~\si{MPa}), and a global $k_\text{HP} = 766$~MPa$\cdot\mu$m$^{1/2}$.
-  \item Grain-size standard deviation ($\text{SD}_\text{grain}$) as a first-class predictor: the Bayesian model M15 ($= $ M3 $+$ $\text{SD}_\text{grain}\cdot d^{-1/2}$) ranks first by PSIS-LOO stacking weight with LOO $= $ LOBO $= 0.694$, and the same structural form is independently rediscovered by both symbolic-regression engines for both properties.
-  \item An equal-footing comparison of linear, non-linear, and symbolic models on identical feature ladders and identical splits, showing that the Wen-type descriptors, not the model class, carry the YS signal, and that the best linear model matches or beats the non-linear panel cross-cluster.
-  \item A deployment-aware model-selection table (LOO, LOBO, BIC, external RMSE, singularity safety) in place of a single leaderboard, with an explicit demonstration that the best-BIC equation is unsafe to deploy (external RMSE 421~\si{MPa}) while a bounded variant is safe (163~\si{MPa}).
-\end{enumerate}
-
-The remainder of this paper is organized as follows.
-Section~\ref{sec:data} summarizes the dataset; detailed exploratory analysis is provided as Supplementary Information (SI). Section~\ref{sec:methods} describes the four method families and the validation protocol. Section~\ref{sec:results} presents results tier by tier, treating YS and HV in parallel throughout. Section~\ref{sec:discussion} distills which method suits which property and why, states the transferable protocol, and discusses limitations. Section~\ref{sec:conclusions} concludes.
-
-\begin{figure*}[!tp]
-  \centering
-  \includegraphics[width=\textwidth]{fig00_framework_overview.png}
-  \caption{Framework overview. Five tiers of increasing model flexibility (classical Hall--Petch $\to$ composition/processing linear models $\to$ physics descriptors $\to$ non-linear ML $\to$ symbolic regression), each annotated with the capability gained and the risk incurred. A validation floor (5-fold $\to$ LOO $\to$ LOBO $\to$ external $+$ singularity audit) runs under all tiers; the right panel lists the four pillars (physics, descriptors, validation, deployment) and their guardrails. Demonstrated on FCC HEAs (YS, HV); the protocol is material-class-agnostic.}
-  \label{fig:framework}
-\end{figure*}
-
-
-
-
-% 
-% 2. DATA
-% 
-
-
-
-\section{Data}
-\label{sec:data}
-
-The dataset comprises 94 FCC HEAs in the Al--Co--Cr--Cu--Fe--Mn--Ni--V system (93 with yield-strength measurements, all 94 with Vickers hardness), produced in two Bayesian-optimization (BO) campaigns at Texas A\&M University under the BIRDSHOT initiative within the ARL HTMDEC program~\cite{Mulukutla2026BRAVE}. The first contributing campaign (batches BBA, BBB, BBC; 34 alloys) varied only chemistry over the eight-element space under a single FCC phase-stability constraint, with thermomechanical processing held fixed (60\% cold reduction, recrystallization at 950~\si{\degreeCelsius} for 0.5~h, water quench). This campaign is documented in full in a companion paper~\cite{Mulukutla2026BRAVE}: a risk-aware Bayesian optimization in which a learned feasibility classifier, integrated into the multi-objective acquisition function, penalized candidates likely to fail at the phase-stability boundary; 48 alloys were synthesized over the three closed-loop iterations from ${\sim}27\,000$ CALPHAD-screened candidates, and the 34 with complete tensile, hardness, and EBSD characterization enter the present dataset. The second campaign (batches CBA, CBB, CBC; 59 alloys) is a microstructure-aware BO over a six-element Co--Cr--Fe--Mn--Ni--V subspace ($c_\text{Al} = c_\text{Cu} = 0$) in which cold work (40--60\%), recrystallization temperature (675--1250~\si{\degreeCelsius}), and hold time (0.5--8~h) are design variables alongside composition, supplying wide within-composition grain-size variation. All ingots were vacuum-arc-melted from $>99.9$~wt.\% precursors, homogenized, cold-rolled, recrystallized, and water-quenched; realized compositions were verified by EDS with mean ingot-level deviations of 0.4--0.6~at.\% from target~\cite{Mulukutla2024BIRDSHOT}.
-
-Grain sizes, measured by EBSD on surfaces normal to the rolling direction, range from 15 to 212~\si{\micro\meter}. For each alloy we also record the within-alloy standard deviation of the grain-size distribution, $\text{SD}_\text{grain}$, extracted from the same EBSD equivalent-circle-diameter distributions; this quantity enters the analysis as a first-class predictor rather than a quality-control statistic. Yield strengths from quasistatic uniaxial tensile tests (0.2\% offset, $5\times10^{-4}$~s$^{-1}$) range from 152 to 544~\si{MPa}; Vickers hardness ranges from 58 to 228. Table~\ref{tab:dataset} summarizes composition, processing, and property statistics. The six BO batches represent distinct design iterations with overlapping but non-identical composition subspaces, providing the natural cluster structure for the LOBO protocol of Section~\ref{sec:validation}. Because both campaigns are BO-driven, the alloys are not a random sample of the composition simplex; predictive $R^2$ values reported here should not be extrapolated to general-population alloys, and LOBO folds differ in difficulty (mean pairwise composition-hull overlap 0.21 in the leading PCA plane). Full exploratory data analysis, property distributions, batch-coverage maps, and pre-modeling diagnostics, including the $\sigma_0$/$k_\text{HP}$ identifiability analysis and the noise-limited $R^2$ ceiling of ${\approx}0.97$ implied by replicate tensile tests, are given in SI Sections~S1--S2.
-
-\begin{table}[t]
+\begin{table}[H]
 \centering
-\caption{Dataset summary: composition, processing, and mechanical-property statistics.}
-\label{tab:dataset}
-\small
-\begin{tabular}{lccc}
+\caption{Five model families used in the main paper and Supplementary Information.}
+\label{tab:families}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}c>{\raggedright\arraybackslash}p{2.70cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
-Quantity & Min & Max & Mean $\pm$ SD \\
+Family & Fixed name & Analyses \\
 \midrule
-\multicolumn{4}{l}{\textit{Composition (at.\%)}} \\
-Al & 0 & 4 & $1.1 \pm 1.8$ \\
-Co & 0 & 52 & $19.7 \pm 15.1$ \\
-Cr & 0 & 20 & $8.1 \pm 5.1$ \\
-Cu & 0 & 24 & $1.9 \pm 4.6$ \\
-Fe & 0 & 32 & $11.1 \pm 7.8$ \\
-Mn & 0 & 24 & $9.3 \pm 4.9$ \\
-Ni & 16 & 72 & $40.6 \pm 13.0$ \\
-V  & 0 & 24 & $8.3 \pm 6.3$ \\
-\midrule
-\multicolumn{4}{l}{\textit{Processing}} \\
-Cold work (\%)              & 40 & 60   & $54.5 \pm 7.3$ \\
-$T_\text{rx}$ ($^\circ$C)   & 675 & 1250 & $988 \pm 133$ \\
-Hold time (h)               & 0.5 & 8    & $2.0 \pm 2.3$ \\
-\midrule
-\multicolumn{4}{l}{\textit{Mechanical properties \& grain size}} \\
-YS (MPa)        & 152 & 544 & $269 \pm 82$ \\
-HV              & 58  & 228 & $133 \pm 33$ \\
-$d$ ($\mu$m)    & 15  & 212 & $58 \pm 43$ \\
+1 & \familyone & Classical and alternative grain-size laws \\
+2 & \familytwo & SSS models, Wen descriptors, and PCA-OLS \\
+3 & \familythree & OLS and composition-processing Hall--Petch models, including grain-width interactions \\
+4 & \familyfour & Matched linear and non-linear estimators \\
+5 & \familyfive & PySR, SISSO, and fixed closed forms \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig00_framework_overview.png}
+  \caption{Five family framework used throughout the paper: \familyone, \familytwo, \familythree, \familyfour, and \familyfive. S1--S4 name the matched input sets in Family~4; individual inputs, including $\mathrm{SD}_{\mathrm{grain}}$, are also tested in Families~2, 3, and 5. Internal evaluation uses 5-fold CV, LOO, and LOBO; external literature testing and singularity auditing provide additional challenge and equation safety checks.}
+  \label{fig:framework}
+\end{figure*}
 
+\section{Dataset and descriptors}
+\label{sec:data}
 
+\subsection{Alloy Synthesis and characterization}
 
+The dataset contains 94 FCC alloy conditions in the Al--Co--Cr--Cu--Fe--Mn--Ni--V system. YS is available for 93 conditions, and HV is available for all 94. An earlier Campaign A established the closed-loop, multi-objective alloy-discovery workflow used across this effort~\cite{Hastings2025FCC}; its records are not part of the present property-modeling dataset due to difference in the processing route for the same~\cite{Hastings2025FCC}. The samples analyzed here were generated from the subsequent B and C Bayesian optimization campaigns at Texas A\&M University within BIRDSHOT Center, supported by the U.S. Army DEVCOM High-Throughput Materials Discovery for Extreme Conditions (HTMDEC) initiative~\cite{Mulukutla2024BIRDSHOT,Mulukutla2026BRAVE}. The B campaign contributes 35 candidates from batches BBA, BBB, and BBC, including 34 with YS. It explored composition under an FCC phase stability constraint while holding processing fixed. The complete B-campaign synthesis and specimen preparation workflow is documented in Ref.~\cite{Mulukutla2026BRAVE}.
 
-% 
-% 3. METHODS
-% 
+The C campaign contributes 59 candidates from CBA, CBB, and CBC. Building on the B-campaign results, it focused on a V--Cr--Mn--Fe--Co--Ni design space and jointly varied composition with three processing variables: cold work, recrystallization temperature, and hold time. Candidate alloys were iteratively selected from an FCC-constrained, manufacturable design space with the models updated after each iteration using the newly acquired data. A modified JMAK-type static-recrystallization and grain-growth prior supplied grain-size estimates over the feasible design space to guide candidate selection. That model and the complete C-campaign workflow will be reported in a separate future publication. The property models evaluated here use grain sizes measured by electron backscatter diffraction (EBSD), not these design-stage predictions.
 
+Overall, both campaigns used the same high level production route: high-purity elemental feedstock was vacuum arc melted, homogenized, cold rolled, recrystallized, and quenched. Energy-dispersive X-ray spectroscopy (EDS) and X-ray diffraction were used to check realized chemistry and phase constitution, while electron microscopy and EBSD documented the microstructure. Grain size was measured from EBSD maps on surfaces normal to the rolling direction and summarized by the equivalent circle mean $d$ and within-map standard deviation $\mathrm{SD}_{\mathrm{grain}}$. Representative candidate alloy verification is shown in ~\autoref{fig:microstructure}. Quasistatic tensile testing was used to determine 0.2\% offset YS, while Vickers indentation tests provided the HV. Further details for BBA-BBC are given in Ref.~\cite{Mulukutla2026BRAVE}; a detailed account of CBA-CBC will follow in the campaign publication.
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{composition_microstructure.png}
+  \caption{Representative candidate alloy verification: measured and target composition, backscattered-electron imaging, an EBSD inverse-pole-figure map, and the corresponding equivalent-circle grain-size distribution. The right-skewed distribution motivates retaining both mean grain size and its within-map standard deviation.}
+  \label{fig:microstructure}
+\end{figure*}
 
+\subsection{Coverage, dependence, and feature sets}
+
+The 94 candidates in study represent 82 unique compositions: 73 chemistries occur once, and nine repeat across 21 records. Processing differs within eight of those nine groups, so these repeated chemistries capture grain size at fixed chemistry rather and varying processing condition; the exception is the CBB04/CBB12 pair, which shares both composition and processing (60\% cold work, \SI{875}{\degreeCelsius}, 1~h) and differs by \SI{32}{MPa} in YS and 4.7 in HV, the only direct estimate of repeatability the dataset contains. The 93-record YS subset contains 81
+unique compositions. One composition appears in both CBB and CBC, so LOBO reduces campaign dependence without removing all exact-composition overlap, and LOO retains an identical chemistry in the training set for 21 of the 94 records. Mean $d$ ranges from 14.66 to \SI{211.75}{\micro\meter}, $\mathrm{SD}_{\mathrm{grain}}$ from 8.32 to \SI{321.06}{\micro\meter}, YS from 151.5 to \SI{544.5}{MPa}, and HV from 57.6 to 227.5. Because $d$ and $\mathrm{SD}_{\mathrm{grain}}$ are strongly correlated ($r=0.801$), we treat the standard deviation as an exploratory measure of distribution width rather than as an independent mechanism. Measurement scatter is a separate quantity: $\mathrm{SD}_{YS}$ is recorded for 80 conditions (0.2--\SI{98.7}{MPa}) and $\mathrm{SD}_{HV}$ for all 94 (1.43--12.44 HV). These measurement standard deviations are not model inputs because replicate counts and reporting definitions are not consistent across the dataset. The Bayesian optimization campaigns sample design-relevant regions, not a random composition simplex (~\autoref{fig:coverage}). 
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_provenance.png}
+  \caption{Composition and processing coverage by batch. The campaigns overlap but do not cover identical regions, and processing is partly structured by campaign. This data provenance motivates reporting LOBO along with record level validation instead of relying only on random splits.}
+  \label{fig:coverage}
+\end{figure*}
+
+Table~\ref{tab:inputs} defines the cumulative S1-S4 input sets used for matched comparisons in Family~4. These labels refer to feature matrices, not model families. Raw composition is represented by eight atomic fractions when appropriate. Identifiable linear models use seven non-Ni fractions. The six Wen alloy descriptors are valence electron concentration (VEC), mixing enthalpy $\Delta H_{\mathrm{mix}}$, mixing entropy $\Delta S_{\mathrm{mix}}$, $\Omega$, electronegativity mismatch $\Delta\chi$, and atomic-size mismatch $\delta$~\cite{Wen2021SSS,Yang2012,Guo2011}.
+
+\begin{table}[H]
+\centering
+\caption{Cumulative input sets used in Family~4.}
+\label{tab:inputs}
+\footnotesize
+\begin{tabular}{@{}lcp{5.6cm}@{}}
+\toprule
+Set & $p$ & Content \\
+\midrule
+S1 & 2 & $d^{-1/2}$ and $\mathrm{SD}_{\mathrm{grain}}$ \\
+S2 & 8 & S1 plus six Wen alloy descriptors \\
+S3 & 11 & S2 plus cold work, $T_{\mathrm{rx}}$, and hold time \\
+S4 & 24 & S3 plus composition and SSS-related quantities \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 
 \section{Methods}
 \label{sec:methods}
 
-The methods fall into four buckets that mirror the tiers of Fig.~\ref{fig:framework}: linear and physics-informed models (Section~\ref{sec:methods_linear}), the non-linear ML panel (Section~\ref{sec:methods_nonlinear}), symbolic regression (Section~\ref{sec:methods_sr}), and the validation protocol that runs under all of them (Section~\ref{sec:validation}). All model families draw on a single shared feature ladder (Table~\ref{tab:ladder}) assembled into one prepared input file, so that every comparison in Section~\ref{sec:results} is made on identical inputs and identical splits.
+\subsection{Family 1: \familyone}
 
-\begin{table}[t]
-\centering
-\caption{The cumulative S1--S5 feature ladder. Each tier adds features to the previous one; S5 replaces hand-engineered interactions with symbolic-regression discovery. Rule-of-mixtures means ($\bar{\mu}$, $\delta_\mu$, $\bar{T}_m$, $\bar{a}$) are excluded from S4 because they never survive symbolic model selection and their removal barely moves the fit (Section~\ref{sec:tier4}).}
-\label{tab:ladder}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lcp{4.6cm}@{}}
-\toprule
-Tier & \# feat & Content \\
-\midrule
-S1 grain & 2 & $d^{-1/2}$, $\text{SD}_\text{grain}$ \\
-S2 $+$Wen & 8 & S1 $+$ curated Wen descriptors: VEC, $\Delta H_\text{mix}$, $\Delta S_\text{mix}$, $\Omega$, $\Delta\chi$, $\delta$ \\
-S3 $+$proc & 11 & S2 $+$ cold work, $T_\text{rx}$, hold time \\
-S4 $+$comp/SSS & 24 & S3 $+$ 8 element fractions $+$ $\sigma_\text{VLC}$, $\sigma_\text{Labusch}$, $\sigma_\text{TC}$, $\Phi_\text{VLC}$, $\varepsilon_L$ \\
-S5 symbolic & --- & symbolic regression discovers the interactions (PySR, SISSO) \\
-\bottomrule
-\end{tabular}
-\end{table}
+Equation~\eqref{eq:hp} provides the common grain-size baseline. We also compare nine pre-specified laws: $d^{-1/2}$, $d^{-1}$, $d^{-1/3}$, $d^{-2/3}$, $\ln(d)/d$, $\ln d$, two composite power-law forms, and a fitted free exponent. AIC, AICc, BIC, and Bayesian PSIS-LOO are used to compare these closely related parameterizations~\cite{Akaike1974,Schwarz1978,Vehtari2017,Yao2018}. We apply the same grain-size analysis separately to YS and HV.
 
-\subsection{Linear and physics-informed models}
-\label{sec:methods_linear}
+\subsection{Family 2: \familytwo}
 
-\emph{(a) Classical and alternative grain-size scaling laws.} 
-Using grain size and $\text{SD}_\text{grain}$ only, we compare nine scaling laws of the form $\sigma_y = \sigma_0 + \sum_j k_j f_j(d)$ with $f(d) \in \{d^{-1/2}, d^{-1}, d^{-1/3}, d^{-2/3}, \ln(d)/d, \ln d, d^{-1/2}{+}d^{-1}, d^{-1}{+}d^{-2}, d^{-n_\text{opt}}\}$~\cite{Hall1951,Petch1953,Dunstan2014,Baldwin1958,Li2016HP}. Frequentist comparison uses AIC, its small-sample correction AICc, and BIC~\cite{Akaike1974,Schwarz1978}, interpreted through the Burnham--Anderson and Kass--Raftery thresholds~\cite{BurnhamAnderson2002,KassRaftery1995}; Bayesian comparison uses MCMC-sampled posteriors (PyMC) scored by Pareto-smoothed importance-sampling LOO (PSIS-LOO)~\cite{Vehtari2017} with stacking weights~\cite{Yao2018}. The same nine laws are fit to HV. Within-replicate fits on the nine multi-replicate composition groups isolate the grain-size dependence from composition scatter (SI Section~S4).
+Family~2 tests whether compact physics-based representations explain YS and HV beyond the grain-size baseline. The Varvenne--Leyson--Curtin (VLC) model uses solute misfit volumes to estimate the zero temperature critical resolved shear stress,
+\begin{equation}
+\tau_{y0}=0.051\alpha^{-1/3}\bar\mu
+\left(\frac{1+\bar\nu}{1-\bar\nu}\right)^{4/3}f_1
+\left(\frac{\sum_i c_i\Delta V_i^2}{b^6}\right)^{2/3},
+\label{eq:vlc}
+\end{equation}
+followed by a thermal activation correction and a Taylor factor. Here, $c_i$ and $\Delta V_i$ are the elemental fractions and misfit volumes, and $\bar\mu$, $\bar\nu$, and $b$ are composition averaged elastic and lattice quantities. Weighted Labusch and Toda-Caraballo estimates provide two related SSS representations. The Labusch and Toda-Caraballo constants are calibrated once to the reported CoCrFeMnNi friction stress; VLC is left uncalibrated. The full expressions and parameter values are given in the Supplementary Information.
 
-\emph{(b) Composition--processing Hall--Petch hierarchy (M-models).}
-We compare models of the form $\sigma_y = \sigma_0(\text{comp}) + k(\text{comp})\,d^{-1/2}$ spanning composition-dependent $\sigma_0$ only (M1: V; M3: all seven non-Ni fractions), composition-dependent $k$ only (M4, M6), both (M7--M10), and physics-descriptor variants (M11, M12). Two $\text{SD}_\text{grain}$-augmented members extend the hierarchy: M13 adds $\text{SD}_\text{grain}$ to $\sigma_0$, and M15 $=$ M3 $+$ $\text{SD}_\text{grain}$ $+$ $\text{SD}_\text{grain}\cdot d^{-1/2}$. The hierarchy is ranked by Bayesian PSIS-LOO stacking weight in addition to LOO/LOBO $R^2$ and BIC, and the identical hierarchy is run on HV with $H_0(\text{comp})$ in place of $\sigma_0(\text{comp})$. A two-stage analysis (subtracting the fitted $\sigma_0(\text{comp})$ and regressing the implied per-alloy $k_\text{eff}$ on composition) tests whether the slope itself is composition-dependent.
+These implementations use Vegard law volumes and rule-of-mixtures elastic properties~\cite{Varvenne2016,Varvenne2017,Labusch1970,TodaCaraballo2015}. We therefore keep calibrated and uncalibrated results separate. We also distinguish standalone prediction, improvement beyond Hall-Petch, and partial correlation after removing raw composition trends. These tests ask different questions, and partial correlation does not establish any form of independence.
 
-\emph{(c) Descriptor hierarchies: SSS, Wen, PCA.}
-Three physics-based SSS models are implemented faithfully per their source papers---Varvenne--Leyson--Curtin (VLC)~\cite{Varvenne2016,Varvenne2017}, a weighted-average Labusch extension~\cite{Labusch1970}, and Toda-Caraballo--Rivera-D\'{i}az-del-Castillo~\cite{TodaCaraballo2015}---using Vegard's-law volumes and rule-of-mixtures elastic constants; complete formulations, calibration choices, and literature benchmarks are given in SI Section~S3. Each SSS prediction is evaluated on three axes: standalone accuracy, marginal value alongside Hall--Petch (Ridge LOO regression $\sigma_y = a\,\sigma_\text{SSS} + b\,d^{-1/2} + c$), and information content beyond composition itself via partial correlation after regressing out the eight elemental fractions. The curated Wen-type descriptor set (VEC, $\Delta H_\text{mix}$, $\Delta S_\text{mix}$, $\Omega$, $\Delta\chi$, $\delta$)~\cite{Wen2021SSS,Yang2012,Guo2011} forms the S2 tier of the ladder. As an interpretable dimensionally-reduced baseline, PCA-OLS projects the curated-Wen$+$$\text{SD}_\text{grain}$ set onto six principal components (88\% of variance) followed by ordinary least squares, and reconstructed feature importances are obtained by projecting the OLS coefficients back through the PCA loadings.
+The descriptor branch uses six Wen alloy descriptors together with $d^{-1/2}$, $\mathrm{SD}_{\mathrm{grain}}$, and three processing variables. Standardization and six-component PCA are fit again within each training fold before OLS. Full-data loadings are descriptive only. This fold-contained implementation corrects the preprocessing leakage in the earlier analysis.
 
-\subsection{Non-linear machine learning}
-\label{sec:methods_nonlinear}
+\subsection{Family 3: \familythree}
 
-Non-linear flexibility is tested at two levels of tuning rigor. The ARMOTE-CV panel (Automated Regression with Multi-Objective Tuning and Evaluation via Cross-Validation) runs eight regressors namely OLS, Bayesian ridge, SVR, decision tree, random forest, XGBoost~\cite{Chen2016XGBoost}, Gaussian-process regression, and a neural network, under nested cross-validation: for each outer fold, multi-objective Optuna~\cite{Akiba2019Optuna} hyperparameter optimization (TPE sampler, minimizing MSE and maximizing $R^2$) runs on the outer training data only, the tuned model is retrained on the full outer training set, and evaluation uses the untouched outer test fold. The panel is run on each tier S1--S4 of the ladder, for both YS and HV, under all three CV protocols.
+Family~3 adds measured composition and processing to the Hall-Petch baseline through a pre-specified OLS hierarchy. Its principal model, M3, is
+\begin{equation}
+\sigma_y=\beta_0+\sum_{e\ne\mathrm{Ni}}\beta_e c_e
+              +k_{\mathrm{HP}}d^{-1/2},
+\label{eq:m3}
+\end{equation}
+where Ni is the composition reference. Other models allow only V in the intercept, composition-dependent slope terms, variation in both intercept and slope, descriptor substitutions, or recorded processing variables. The family name includes processing because the broader hierarchy tests those covariates, although M3 itself uses composition and $d$ without an explicit processing coefficient. Composition, processing, and grain size are interdependent in these campaigns. The fitted coefficients can therefore absorb covariance among them and are not interpreted as elemental constants.
 
-A complementary equal-footing fair comparison strips tuning out entirely: twelve linear and non-linear models (OLS, Ridge, Lasso, ElasticNet, SVR, KRR, random forest, extra trees, gradient boosting, XGBoost, LightGBM, MLP) run at library defaults on identical ladders and identical LOO/LOBO/5-fold splits, so that differences in score reflect features and model class rather than tuning budget. This panel exists because the original 17-model leaderboard (SI Section~S5) was apples-to-oranges: tree models received 64 engineered features and 50 Optuna trials while linear models received at most 33 features at defaults.
+The hierarchy is compared using information criteria and pooled out-of-fold predictions. We test $\mathrm{SD}_{\mathrm{grain}}$ first as an additive microstructure term and then through M15,
+\begin{equation}
+\sigma_y=\beta_0+\sum_{e\ne\mathrm{Ni}}\beta_e c_e
+ +k_{\mathrm{HP}}d^{-1/2}+\gamma\mathrm{SD}_{\mathrm{grain}}
+ +\eta\mathrm{SD}_{\mathrm{grain}}d^{-1/2}.
+\label{eq:m15}
+\end{equation}
+The interaction allows the grain-distribution width to modify the fitted grain-size contribution. It is pre-specified OLS and can be reproduced from the prepared dataset, but its coefficients remain associational because $d$, $\mathrm{SD}_{\mathrm{grain}}$, composition, and processing are correlated.
 
-\subsection{Symbolic regression (the S5 tier)}
-\label{sec:methods_sr}
+\subsection{Family 4: \familyfour}
 
-Symbolic regression (SR) replaces hand-engineered interaction features: the engines discover the functional form---including any composition--grain-size coupling---rather than being handed candidate products. PySR~\cite{Cranmer2023PySR} searches a $3\times3$ grid of feature sets (F1 grain: $d^{-1/2}$, $\text{SD}_\text{grain}$; F2 $+$raw composition and processing; F3 $+$curated Wen descriptors) and operator sets (O1 $\{+,-\}$; O2 $\{+,-,\times,\div\}$; O3 $=$ O2 $+$ unary $\{\sqrt{\cdot}, \log, x^2, x^3\}$), excluding the binary power operator so that exponents stay fixed and interpretable. From each grid cell we retain two equations: the accuracy solution (lowest loss) and the elbow solution at the parsimonious knee of the complexity--loss front. SISSO~\cite{Ouyang2018SISSO} provides an independent sparse-operator route; we run it on its original Oliynyk-style pool~\cite{Oliynyk2016} (yielding the equations labeled SISSO Full and SISSO Robust), on the same pool augmented with $\text{SD}_\text{grain}$, and for a matched engine-versus-engine comparison on exactly the curated-Wen inputs used by PySR, with all engines scored on the same effective-parameter count, the same BIC formula, and the same external set. Every discovered equation passes through a singularity audit (Section~\ref{sec:validation}) before any deployment claim. Expanded-search controls (SISSO~v2 with free grain-size exponents and unary operators; EML universal-operator regression) are reported in SI Section~S6.
+Family~4 compares linear controls and non-linear estimators using the same S1--S4 matrices and validation splits. OLS, Ridge, Lasso, and ElasticNet are retained so that the added value of non-linearity can be measured at fixed inputs. The primary audit uses declared, fixed parameter settings with no data-driven hyperparameter selection. For example, Lasso uses $\alpha=1.0$, while LightGBM uses 400 estimators, a maximum depth of 3, a learning rate of 0.05, and a feature fraction of 0.8. These are settings chosen for this study, not ``library defaults.'' An archived ARMOTE-CV table reports nested Optuna tuning for eight regressors. Because the repository does not contain its raw fold objects or generator, we use it only as secondary evidence. We also exclude the legacy full-data-tuned leaderboard from confirmatory rankings.
 
-\subsection{Validation protocol}
+\subsection{Family 5: \familyfive}
+
+PySR searches three feature pools and three operator sets, while SISSO provides a sparse operator comparison~\cite{Cranmer2023PySR,Ouyang2018SISSO}. PySR pool P1 contains grain statistics, P2 adds raw composition and processing, and P3 adds Wen descriptors and processing. The operator sets progress from addition and subtraction to multiplication, division, and protected non-linear operators. SISSO starts from 27 composition, thermodynamic, SSS, and grain-size features and builds two algebraic expansion levels before sparse selection.
+
+In the stored workflow, equations were selected after the complete data search fronts had been viewed. Their constants were then refit within the CV folds. We therefore call these results ``post-selection fixed-form CV,'' rather than unbiased outer-loop estimates of symbolic discovery. Protected square root and logarithm are evaluated as $\sqrt{|x|}$ and $\log(|x|+\epsilon)$. We check each reported closed form for small or transformed denominators, sign changes, non-finite values, and extreme predictions over the observed internal and literature ranges. This audit is equation-specific and does not establish safety outside the stated descriptor envelope. BIC values from symbolic search are not compared directly with the pre-specified linear models because the stored symbolic parameter count omits the cost of searching variables, operators, and structures.
+
+For HV, the selected structure is
+\begin{equation}
+H_V=c_0+c_1\frac{d_0-d}{\mathrm{SD}_{\mathrm{grain}}}
+       +c_2\frac{\Delta H_{\mathrm{mix}}}{t_{\mathrm{hold}}^2}.
+\label{eq:hvform}
+\end{equation}
+The constants are refit in every fold. In the reported equation, $d$, $d_0$, and $\mathrm{SD}_{\mathrm{grain}}$ are in \si{\micro\meter}, $t_{\mathrm{hold}}$ is in h, and $\Delta H_{\mathrm{mix}}$ is in kJ~mol$^{-1}$. Thus $c_0$ and $c_1$ have units of HV, while $c_2$ has units of HV$\cdot$h$^2\cdot$mol\,kJ$^{-1}$. This is an empirical expression, not a dimensionally universal relation. Its domain excludes $\mathrm{SD}_{\mathrm{grain}}\rightarrow0$ and $t_{\mathrm{hold}}\rightarrow0$.
+
+\subsection{Validation hierarchy and score uncertainty}
 \label{sec:validation}
 
-Model performance is assessed through four complementary protocols, reported together wherever a cross-validated metric appears:
-\begin{enumerate}
-  \item \textbf{5-fold CV} (shuffled, fixed seed): the permissive random-split baseline most papers report.
-  \item \textbf{Leave-one-out (LOO)}: hold out one alloy, train on the rest---within-cluster interpolation~\cite{Stone1974}.
-  \item \textbf{Leave-one-batch-out (LOBO)}: hold out an entire BO batch, train on the other five---genuine cross-cluster extrapolation. The LOO$\to$LOBO gap is the overfitting tax that random-split CV hides. (LOBO is our batch-structured instance of the leave-one-cluster-out protocol introduced for materials discovery by Meredig et al.~\cite{Meredig2018}; we use the term LOBO throughout.)
-  \item \textbf{External validation}: 82 independent literature points from four sources (Citrine/Borg~\cite{Borg2020}, 48; Schneider et al.~\cite{Schneider2021}, 6; Otto et al.~\cite{Otto2013}, 3; Huang et al.~\cite{HuangTY2019} hardness-converted, 25), with a source-quality grading and a $C_\text{eff}$-sensitivity analysis (SI Section~S7).
-\end{enumerate}
-All LOO/LOBO $R^2$ values are pooled out-of-fold ($Q^2$-style) scores computed over all held-out predictions against the global mean, not averages of per-fold $R^2$. Information criteria (AIC/BIC from training residuals with effective parameter counts $k_\text{eff}$) quantify the accuracy--parsimony trade-off; for non-parametric models the $k_\text{eff}$ estimates are approximate and we rely primarily on LOO/LOBO for those comparisons. Every closed-form equation additionally receives a singularity audit: each denominator and each term that can change sign is swept over the convex hull of the training data and over the external set, extreme or non-finite predictions are counted, and the equation is labeled singularity-safe only if none occur; the audited deployment envelope is recorded alongside the equation. For hardness--strength correspondence we use the generalized Tabor framework $H_V \approx 3\,\sigma_f(\varepsilon_r)$ with representative strain $\varepsilon_r = 0.08$ for Vickers geometry~\cite{Tabor1951,Dao2001}, defining the effective Tabor factor $C_\text{eff} \equiv \text{HV(MPa)}/\sigma_y = 3\,\sigma_f(\varepsilon_r)/\sigma_y$ and the early-strain hardening exponent $n_\text{eff} = \ln(C_\text{eff}/3)/\ln 40$; derivations are given in SI Section~S7.
+We use three internal protocols that ask progressively different generalization questions: (i) shuffled 5-fold CV with seed 42; (ii) LOO; and (iii) LOBO across the six BO batches. LOO tests record-level interpolation, but another record with the same composition can remain in the training set. We therefore do not interpret LOO as strict new composition validation. LOBO tests transfer to a new iteration while retaining data from the broader experimental program and, in one case, the same composition.
 
+For every protocol, predictions from all held-out records are pooled before computing
+\begin{equation}
+Q^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}.
+\end{equation}
+We report this pooled quantity as cross-validated $R^2$. To calculate batch-clustered percentile intervals, we resample the six batches with replacement 1000 times while keeping every batch intact. These intervals show sensitivity to the sampled batches. With only six clusters, they should not be read as precise inferential confidence intervals. They quantify score uncertainty, not per-alloy predictive uncertainty; predictive intervals are outside the scope of this study.
 
+The stored literature compilation has three evidence classes. E1 contains 54 direct strength records: 48 from the Borg/Citrine compilation~\cite{Borg2020} and six compression records for CrFeNi from Schneider and Laplanche~\cite{SchneiderCrFeNi2021}. These records represent only 18 exact compositions and mix sources and test modes. The legacy extraction limited grain size to 3--\SI{500}{\micro\meter}, removed YS values above \SI{800}{MPa}, and omitted one large-grain CrFeNi record because it departed from the expected Hall-Petch trend. Since two of these rules use the outcome or its expected relationship, we report E1 only as a heterogeneous literature stress test, not as an unbiased external validation set. E2 contains three values reconstructed from published Hall-Petch fits~\cite{Otto2013}. E3 contains 25 YS proxies converted from reported hardness~\cite{HuangTY2019}. We keep E2 and E3 separate from direct measurements.
 
-
-
-% 
-% 4. RESULTS
-%
-
-
+For the hardness-strength comparison, hardness is converted to stress units and summarized as $C_{\mathrm{eff}}=\mathrm{HV(MPa)}/\sigma_y$. Under the conditional Tabor-Hollomon approximation,
+\begin{equation}
+n_{\mathrm{app}}=\frac{\ln(C_{\mathrm{eff}}/3)}{\ln(0.08/0.002)}
+=\frac{\ln(C_{\mathrm{eff}}/3)}{\ln 40}.
+\label{eq:napp}
+\end{equation}
+This is an apparent index, not a measured tensile hardening exponent, because offset YS is not the flow stress at exactly 0.002 true plastic strain and Hollomon behavior is assumed between 0.2\% and 8\% strain.
 
 \section{Results}
 \label{sec:results}
 
-Results are presented tier by tier, treating YS and HV side by side in each subsection.
-Exploratory analysis and pre-modeling diagnostics are summarized where needed and detailed in SI Sections~S1--S2.
+Table~\ref{tab:primary} gives the common comparison across model families. Five-fold CV and LOO mainly test interpolation within the pooled dataset, whereas LOBO asks whether a model transfers to an unseen experimental batch. We therefore base the main conclusions on LOBO together with the change from record-level to batch-level validation, rather than on the highest score in any one column. A negative $R^2$ means that the held-out predictions are worse than using the held-out mean.
 
-\subsection{Tier 1 -- grain size alone sets the floor for both properties}
-\label{sec:tier1}
+\begin{table*}[t]
+\centering
+\caption{Pooled out-of-fold $R^2$ across the three internal validation protocols. LOBO provides the primary grouped transfer test. Family~4 includes linear controls to isolate the value of non-linearity. The Family~5 HV result is conditional on a structure selected using the full dataset.}
+\label{tab:primary}
+\footnotesize
+\setlength{\tabcolsep}{3.8pt}
+\begin{tabular}{lllrrr}
+\toprule
+Target & Family/model & Evidence status & 5-fold & LOO & LOBO \\
+\midrule
+YS & F1 Classical HP & baseline & 0.405 & 0.406 & 0.373 \\
+YS & F2 PCA-OLS & fold-contained & 0.462 & 0.480 & 0.362 \\
+YS & F3 M3 & pre-specified linear & 0.666 & 0.652 & 0.625 \\
+YS & F3 M15 SD interaction & pre-specified linear & 0.731 & 0.694 & 0.694 \\
+YS & F4 Lasso S2 & fixed settings & 0.683 & 0.674 & 0.621 \\
+YS & F4 LightGBM S2 & fixed settings & 0.632 & 0.574 & 0.615 \\
+HV & F1 Classical HP & baseline & 0.086 & 0.136 & $-0.077$ \\
+HV & F4 LightGBM S1 & fixed settings & 0.195 & 0.323 & 0.112 \\
+HV & F5 fixed form & post-selected & 0.725 & 0.727 & 0.636 \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-For yield strength, the classical Hall--Petch regression against $d^{-1/2}$ across the 93 alloys yields LOO $R^2 = 0.406$ (Fig.~\ref{fig:hall_petch}), so grain size alone accounts for less than half of the observed variance, and the residual scatter is strongly correlated with composition---V-containing alloys sit systematically above the fit. Among the nine scaling laws, four---$d^{-1/2}$, $d^{-2/3}$, $\ln(d)/d$, and $d^{-1/3}$---are statistically indistinguishable ($\Delta\text{BIC} < 2$); $d^{-1}$ and $\ln d$ are mildly disfavored, and the optimized exponent $n_\text{opt} = 0.548$ sits close to the classical 0.5. The Bayesian analysis corroborates this: the free-exponent posterior is $n = 0.53 \pm 0.16$ (94\% HDI $[0.22, 0.82]$) with its mode near 0.5, and PSIS-LOO stacking places the entire weight on the classical $d^{-1/2}$ form. Within the nine multi-replicate composition groups, where composition is fixed by construction, grain size is a strong predictor (pooled within-group $R^2 = 0.77$--$0.79$) but no functional form dominates (spread $\leq 0.017$ in $R^2$); full tables are given in SI Section~S4. The data therefore support $d^{-1/2}$ as the backbone by parsimony while lacking the statistical power to exclude neighboring monotonic forms. This reading agrees with a recent statistical analysis over more than $10^6$ simulated polycrystalline microstructures, which likewise concludes that the $d^{-1/2}$ form remains statistically valid for the mean grain size once other microstructural features are marginalized~\cite{Gu2024}---and which frames the scaling-law question, as we do, as a model-selection problem rather than a search for a single true exponent.
+The grouped scores should also be read in light of composition coverage. Six principal components represent 96.9\% of the composition variance, and the mean pairwise batch-hull overlap in the PC1--PC2 projection is only about 0.21. CBC is relatively isolated in this projection, whereas CBA is well covered by the other batches. LOBO therefore combines easier interpolation-like folds with harder extrapolation folds; the pooled score is not a uniform measure of difficulty.
 
-For hardness the same backbone is much weaker: classical Hall--Petch on HV reaches 5-fold $R^2 = 0.09$, LOO $R^2 = 0.136$, and LOBO $R^2 = -0.08$, with fitted $H_0 = 86.7$~HV and $k_H = 306$~HV$\cdot\mu$m$^{1/2}$. The optimized HV exponent ($n = 1.73$) lies far from the YS value, an early hint confirmed at every subsequent tier that HV--grain-size coupling is governed by more than mean-boundary strengthening. Grain size alone caps out at LOO ${\approx}0.41$ for YS and ${\approx}0.14$ for HV; everything above this floor must come from composition, processing, or grain-size heterogeneity.
+We do not report a single predictive ceiling. An in-sample composition-mean calculation gives $R^2\approx0.86$ if all 72 singleton compositions in the 93-record YS subset are assigned zero residual. In contrast, a calculation based only on repeated compositions gives a formal value near $-0.05$ because those groups also vary in processing and grain size. A separate estimate near 0.97 treats reported within-alloy standard deviations as irreducible target error, but replicate counts are unavailable. None of these quantities is a defensible out-of-sample ceiling.
 
-\begin{figure*}[!tp]
+\subsection{Family 1: \familyone}
+
+The classical Hall--Petch law provides the grain-size-only baseline. For YS, it gives training $R^2=0.429$, LOO $R^2=0.406$ with RMSE $=\SI{62.5}{MPa}$, and LOBO $R^2=0.373$ (Fig.~\ref{fig:hp}). Its similar LOO and LOBO scores show that mean grain size contains a modest, reproducible YS signal.
+
+The exact grain-size law is less certain. Nine pre-specified forms were compared. Five two-parameter monotonic laws lie within $\Delta\mathrm{BIC}<2$ and have LOO $R^2$ from 0.395 to 0.406. The free-exponent fit gives $n=0.548$, but its additional parameter raises $\Delta\mathrm{BIC}$ to 4.5. The Bayesian estimate is $n=0.53\pm0.16$, with a 94\% highest-density interval of about $[0.22,0.82]$. Bayesian stacking places all weight on the classical form, but the candidate laws have nearly equal expected log predictive density, so this boundary weight is not decisive. The data support $d^{-1/2}$ as a simple baseline, not as a uniquely identified exponent or mechanism.
+
+The same baseline does not describe HV well. The classical form has training/LOO $R^2=0.169/0.136$ and becomes negative under LOBO ($-0.077$). A full-data optimized exponent of 1.728 raises LOO $R^2$ only to 0.166 and is descriptive because the exponent was selected before CV. Mean grain size alone therefore does not transfer as a hardness model.
+
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{fig01_hall_petch.png}
-  \caption{Classical Hall--Petch analysis: yield strength versus $d^{-1/2}$ for the 93 FCC HEAs with tensile data, colored by experimental batch. The global regression (LOO $R^2 = 0.406$) leaves substantial residual variance attributable to composition.}
-  \label{fig:hall_petch}
-\end{figure*}
+  \includegraphics[width=\columnwidth]{fig01_hall_petch.png}
+  \caption{Family~1 \familyone{} fits for YS and HV. Grain size provides a useful baseline for YS, but mean grain size alone does not transfer for HV.}
+  \label{fig:hp}
+\end{figure}
 
-\subsection{Tier 2 -- faithful SSS models fail quantitatively and are redundant descriptors}
-\label{sec:tier2}
+\subsection{Family 2: \familytwo}
 
-Implemented faithfully with Vegard's-law and rule-of-mixtures inputs, all three physics-based SSS models overpredict the friction stress of the 93-alloy panel: within a Cantor-anchored calibration (SI Section~S3), VLC overshoots the Hall--Petch-corrected experimental friction stress by 78\% (raw $R^2 = -6.92$), Toda-Caraballo by 42\% ($R^2 = -3.18$), and only calibrated Labusch lands near unit ratio (1.07, $R^2 = +0.14$); across the wider uncalibrated benchmark the overprediction spans factors of 2--28. As standalone LOO predictors all three fall below the Hall--Petch baseline, and in a Ridge regression alongside $d^{-1/2}$ only calibrated Labusch adds value (LOO $R^2 = 0.469$ vs.\ 0.406).
-The decisive test is redundancy: once the eight elemental fractions are provided as features, appending any SSS prediction changes LOO $R^2$ by less than 0.002 (composition$+$HP $= 0.654$), and the partial correlation between each SSS prediction and YS after regressing out composition is below 0.10 in magnitude for all three models. All three formulas are deterministic functions of composition, so a flexible model with composition as input can encode any transformation they express; the physics-based encoding adds value only if it is more sample-efficient, and on this dataset it is not.
+Family~2 tests whether physics-derived descriptors add information beyond grain size and composition. For the SSS estimates, Cantor-anchored Labusch calibration gives a mean prediction-to-observation ratio of 1.07. Calibrated Toda--Caraballo and VLC overpredict by 42\% and 78\%, and uncalibrated variants overpredict by factors of 2--5. Used alone, VLC, Labusch, and Toda--Caraballo give LOO $R^2=0.030$, 0.274, and 0.091. Adding $d^{-1/2}$ changes these values to 0.396, 0.469, and 0.399, compared with 0.406 for Hall--Petch alone (Table~\ref{tab:sss-main}). Only calibrated Labusch gives a small improvement over that baseline (Fig.~\ref{fig:sss}).
 
-The same conclusion holds for hardness: SSS descriptors carry no independent HV signal once composition is present. For both properties, the SSS models serve better as feature generators and physics audits than as standalone predictors -- a best-practices warning quantified here by the partial-$r$ audit, which we suggest should precede any claim that a hand-built descriptor is doing physical work in an ML model.
+The descriptors do not add information once composition is included. Adding an SSS estimate to a composition model changes LOO $R^2$ by at most 0.002, and all linear partial correlations after removing composition are below 0.10 in magnitude. This redundancy applies to the present descriptor inputs; it does not distinguish limitations of SSS theory from uncertainty in atomic volumes, elastic properties, calibration, or unmeasured microstructure.
 
-\subsection{Tier 3 -- composition and processing: signal for YS, noise for HV}
-\label{sec:tier3}
+The broader Wen/PCA representation gives 5-fold/LOO/LOBO $R^2=0.462/0.480/0.362$ when PCA is fitted inside each fold. Global preprocessing had produced 0.525/0.516/0.441, showing that even unsupervised scaling and PCA can inflate held-out scores when fitted before the split. The corrected LOBO result is below the classical Hall--Petch baseline, so the PCA model does not provide a transferable improvement at the batch level. Full-data loadings are therefore used only to describe the descriptor space, not as causal feature importance.
 
-Making $\sigma_0$ composition-dependent yields the largest single gain of the ladder for yield strength (Table~\ref{tab:mmodels}, Fig.~\ref{fig:comp_hp_models}). Adding only the V fraction (M1) raises LOO $R^2$ from 0.406 to 0.605; M3 (all seven non-Ni fractions in $\sigma_0$, constant $k_\text{HP}$) reaches LOO $R^2 = 0.652$, LOBO $R^2 = 0.625$, and external RMSE 133~\si{MPa}, and carries a PSIS-LOO stacking weight of 0.902 in the no-$\text{SD}_\text{grain}$ Bayesian comparison.
-M1 and M3 are BIC-indistinguishable ($\Delta\text{BIC} = 1.4$), so the V-only model is an equally valid parsimonious choice. The fitted $k_\text{HP} = 766$~MPa$\cdot\mu$m$^{1/2}$ sits within the FCC-HEA literature range (between CoCrFeNi at 516 and Al$_{0.3}$CoCrFeNi at 824~MPa$\cdot\mu$m$^{1/2}$; SI Section~S8), whereas the grain-only fit inflates the slope to ${\sim}1149$~MPa$\cdot\mu$m$^{1/2}$ by absorbing composition effects, V-rich alloys are systematically stronger and finer-grained ($r(V, d) = -0.24$), so the composition-dependent intercept is what returns the slope to physically sensible values. V dominates the friction stress ($\alpha_V = +291$~\si{MPa}, the largest positive coefficient), consistent with the Yin--Maresca--Curtin prediction that V is the optimal FCC-HEA strengthener by misfit volume~\cite{Yin2020}. The same element plays a documented dual role at campaign level: in the risk-aware optimization that generated the B-batches, V simultaneously drove yield strength ($r = 0.84$) and $\sigma$-phase infeasibility ($r = 0.54$), with the strongest alloys and the phase failures sharing compositional points at V $= 24$~at.\%~\cite{Mulukutla2026BRAVE}---so $\alpha_V$ should be read as a within-FCC-window coefficient whose deployment envelope ends at the phase-stability boundary. Notably, the full coefficient-versus-misfit comparison (Fig.~\ref{fig:misfit}) shows the empirical $\alpha_i$ tracking fractional volume misfit for the elements that vary appreciably across the dataset, with Al the labeled exception (largest misfit but a narrow 0--4~at.\% range). Composition enters through $\sigma_0$, not the slope: a two-stage regression of per-alloy $k_\text{eff}$ on composition yields $R^2 = 0.006$ ($F$-test $p = 0.999$), and hierarchical Bayesian slope coefficients have uncertainties 3--4$\times$ their means. The composition-dependent intercept mirrors the elemental-combination systematics that Yoshida et al.\ extracted from Hall--Petch fits across CoCrFeMnNi subsets~\cite{Yoshida2019acta}; the composition-independent slope, by contrast, is a statement about this dataset: single-phase solid solutions with no deliberate boundary segregants, rather than a universal rule, since boundary chemistry can nearly double $k_\text{HP}$ where segregation or nano-clustering is activated~\cite{LiKHP2024}.
+\begin{table*}[t]
+\centering
+\caption{Family~2 YS descriptor results. Ratio is mean SSS prediction divided by mean Hall--Petch-corrected YS. Raw $R^2$ and Spearman $\rho$ compare the complete-data SSS estimates with the corrected YS. Standalone and $+$HP are LOO results; $+$HP is Ridge using the SSS estimate and $d^{-1/2}$.}
+\label{tab:sss-main}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrr}
+\toprule
+Model & Mean (MPa) & Ratio & Raw $R^2$ & Spearman $\rho$ & Standalone $R^2$ & $+$HP $R^2$ & $+$HP RMSE (MPa) \\
+\midrule
+VLC & 342 & 1.78 & $-6.92$ & 0.53 & 0.030 & 0.396 & 63.1 \\
+Labusch, calibrated & 206 & 1.07 & 0.14 & 0.55 & 0.274 & 0.469 & 59.1 \\
+Toda--Caraballo, calibrated & 274 & 1.42 & $-3.18$ & 0.49 & 0.091 & 0.399 & 62.9 \\
+HP only & --- & --- & --- & --- & --- & 0.406 & 62.5 \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
-Adding grain-size heterogeneity extends the hierarchy decisively. M15 ($=$ M3 $+$ $\text{SD}_\text{grain}$ $+$ $\text{SD}_\text{grain}\cdot d^{-1/2}$) takes rank~\#1 in the $\text{SD}_\text{grain}$-augmented Bayesian comparison with stacking weight 0.89 and $\Delta\text{elpd} = 11.7$ over M3, and reaches LOO $= $ LOBO $= 0.694$---the smallest LOO$\to$LOBO gap and the highest LOBO of any closed-form YS model in this work. Notably, $\text{SD}_\text{grain}\cdot d^{-1/2}$ is the same structural form that both symbolic-regression engines rediscover independently in Section~\ref{sec:tier5}.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.88\columnwidth]{fig_sss_parity.png}
+  \caption{Family~2 SSS predictions compared with Hall--Petch-corrected YS. Calibration can reduce average bias without showing that the descriptor transfers or adds information beyond composition.}
+  \label{fig:sss}
+\end{figure}
 
-For hardness the identical machinery overfits. Every composition M-model run on HV has LOO $R^2 \leq 0.14$, and the grain-only baseline M0 is the best member of the hierarchy: composition adds variance, not signal. The contrast with YS, where the same features lifted LOBO from 0.39 to 0.625, is the first half of the property-specific-modeling argument completed in Section~\ref{sec:contrast}.
+\subsection{Family 3: \familythree}
+
+Family~3 adds composition, processing, and measured microstructure terms to the Hall--Petch baseline. M3 gives LOO/LOBO $R^2=0.652/0.625$ and LOBO RMSE $=\SI{49.7}{MPa}$. Its batch-bootstrap interval for LOBO $R^2$ is $[0.501,0.670]$, while the six individual batch-held-out scores range from 0.306 to 0.697. This spread shows that transfer difficulty differs across batches. M3 therefore retains useful YS information beyond mean grain size across the sampled experimental iterations.
+
+The grain-size distribution adds information only in a specific form (Fig.~\ref{fig:mmodel}). Adding $\mathrm{SD}_{\mathrm{grain}}$ to M3 as an independent linear term raises LOO $R^2$ from 0.652 to 0.668 but lowers LOBO from 0.625 to 0.595. M15, which includes both the additive term and $\mathrm{SD}_{\mathrm{grain}}d^{-1/2}$, gives 5-fold/LOO/LOBO $R^2=0.731/0.694/0.694$ and LOBO RMSE $=\SI{44.9}{MPa}$. Its LOO and LOBO batch-bootstrap intervals are $[0.578,0.766]$ and $[0.599,0.733]$. Relative to M3, M15 lowers BIC by 20.1; the interaction coefficient has $t=4.71$ ($p=1.0\times10^{-5}$) in the complete-data OLS fit. M15 is therefore the strongest verified low-complexity YS model when $\mathrm{SD}_{\mathrm{grain}}$ is measured. The additive control shows that the gain cannot be credited to grain-width measurement alone. Because the term is correlated with mean grain size and processing, it is interpreted as a predictive interaction, not as proof that distribution width changes the Hall--Petch slope.
+
+The individual M3 LOBO scores are 0.697 for BBA, 0.306 for BBB, 0.656 for BBC, 0.423 for CBA, 0.584 for CBB, and 0.409 for CBC; the corresponding RMSE values range from 32.9 to \SI{60.4}{MPa}. CBC has the lowest projected hull containment (0.476), while CBA has complete containment in the PC1--PC2 projection. Coverage is not the only source of error, but these folds show why the pooled LOBO score should be accompanied by batch-level results.
+
+The complete-data M3 fit gives $k_{\mathrm{HP}}=766$~MPa$\cdot\mu$m$^{1/2}$. Adding the composition-dependent intercept lowers the slope from about 1149~MPa$\cdot\mu$m$^{1/2}$ in the grain-only fit, consistent with composition--grain-size confounding in Family~1. The M3 value is higher than several representative directly reported values, which span 110--538~MPa$\cdot\mu$m$^{1/2}$ in the cited pure metals and FCC MPEAs~\cite{Cordero2016,Yoshida2017,Otto2013,Yoshida2019acta}. This comparison is not an exhaustive literature bound, and the fitted M3 value should not be treated as a universal FCC value. Among the composition coefficients (Table~\ref{tab:m3-main}), V is the largest positive term relative to Ni ($+291$~MPa), but all coefficients are conditional on the sampled compositions and processing routes.
+
+Two sensitivity checks address numerical stability of this fit. Across 1000 grain-size perturbations, the V, Co, Cr, and Fe coefficients change by less than about 15\%, whereas $k_{\mathrm{HP}}$ changes by about 39\%. Al is not included in the 15\% statement because it spans only 0--4~at.\% and has a much wider interval. A 10,000-replicate row bootstrap gives standard-error ratios of 0.99--1.54 relative to OLS. These checks support stability within the sampled records, but a row bootstrap does not reproduce campaign-level sampling and cannot establish transfer.
 
 \begin{table}[t]
 \centering
-\caption{Composition-dependent Hall--Petch hierarchy for YS ($\sigma_y = \sigma_0(\text{comp}) + k(\text{comp})\,d^{-1/2}$), with the $\text{SD}_\text{grain}$-augmented M15. $\Delta$BIC is relative to M3. For HV, all composition M-models have LOO $R^2 \leq 0.14$ and M0 is best.}
-\label{tab:mmodels}
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccc}
+\caption{Family~3 M3 coefficients relative to Ni. Intervals are conditional on the OLS specification and sampled campaigns.}
+\label{tab:m3-main}
+\footnotesize
+\begin{tabular}{lrrr}
 \toprule
-Model & Params & LOO $R^2$ & LOBO $R^2$ & $\Delta$BIC \\
+Parameter & Estimate (MPa) & 95\% low & 95\% high \\
 \midrule
-M0: baseline HP                    & 3  & 0.406 & 0.373 & 36.5 \\
-M1: $\sigma_0(V)$                  & 4  & 0.605 & ---   & 1.4 \\
-M3: $\sigma_0$(all 7 elem.)        & 10 & 0.652 & 0.625 & 0.0 \\
-M4: $k(V)$                         & 4  & 0.598 & ---   & 3.2 \\
-M6: $k$(all 7 elem.)               & 10 & 0.622 & ---   & 5.5 \\
-M10: $\sigma_0$(all)$+k$(all)      & 17 & 0.650 & ---   & 17.3 \\
-M11: $\sigma_0(\delta)$            & 4  & 0.456 & ---   & 31.3 \\
-M15: M3$+\text{SD}_\text{grain}(\cdot d^{-1/2})$ & 12 & 0.694 & 0.694 & --- \\
+Intercept & 229.6 & 152.4 & 306.7 \\
+Al & $-201.3$ & $-955.4$ & 552.8 \\
+Co & $-187.2$ & $-268.1$ & $-106.3$ \\
+Cr & $-307.7$ & $-588.5$ & $-26.9$ \\
+Cu & $-334.0$ & $-651.9$ & $-16.2$ \\
+Fe & $-360.4$ & $-520.1$ & $-200.6$ \\
+Mn & 82.3 & $-117.6$ & 282.2 \\
+V & 291.3 & 41.0 & 541.5 \\
+$k_{\mathrm{HP}}$ & 765.8 & 501.5 & 1030.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=\columnwidth]{fig_misfit_scatter.png}
-  \caption{Empirical M3 friction-stress coefficients $\alpha_i$ versus fractional volume misfit $|\Delta V_i / \bar{V}|$ (Ni reference, $\alpha_\text{Ni} \equiv 0$). V's standout positive coefficient ($+291$~\si{MPa}, ${\sim}20\%$ misfit) aligns with the parameter-free Varvenne--Curtin prediction; Al has the largest misfit but a strongly negative empirical $\alpha$, reflecting its low and narrow concentration range (mean 1.1~at.\%).}
-  \label{fig:misfit}
-\end{figure}
+M3 assumes a shared Hall--Petch slope, but the dataset cannot test that assumption decisively. Only nine compositions are repeated, most have two records, and processing changes within some groups. Their descriptive local slopes range from about $-8539$ to 9282~MPa$\cdot\mu$m$^{1/2}$. A fixed-effect summary gives a slope near 2144, Cochran $Q\approx251$, and $I^2=96.8\%$, but this apparent heterogeneity cannot be assigned to composition under the present design. The data therefore do not show that $k_{\mathrm{HP}}$ is composition-independent. The supported result is narrower: a composition-dependent intercept with a shared grain-size term predicts YS well across the sampled batches. The physical division among friction stress, processing, and grain-boundary strengthening remains unresolved.
 
-\begin{figure*}[!tp]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{fig_comp_hp_models_ab.png}
-  \caption{Composition-dependent Hall--Petch model comparison for YS across four mechanism groups (A: composition-dependent $\sigma_0$; B: composition-dependent $k$; C: both; D: physics-descriptor variants). \textbf{(a)}~LOO $R^2$ ranking. \textbf{(b)}~$\Delta$BIC relative to M3. Composition-dependent $\sigma_0$ alone tops both criteria.}
-  \label{fig:comp_hp_models}
+  \includegraphics[width=0.86\textwidth]{fig_comp_hp_models_ab.png}
+  \caption{Family~3 Hall--Petch hierarchy for YS. M15 adds $\mathrm{SD}_{\mathrm{grain}}$ to M3 both directly and through the interaction $\mathrm{SD}_{\mathrm{grain}}d^{-1/2}$. It gives the strongest internal result, but its coefficients remain conditional on the sampled campaigns and correlated microstructure.}
+  \label{fig:mmodel}
 \end{figure*}
 
-\subsection{Tier 4 -- non-linear flexibility does not pay off cross-cluster}
-\label{sec:tier4}
+\subsection{Family 4: \familyfour}
 
-Under the nested-CV ARMOTE panel, the best yield-strength model is linear: Bayesian ridge at the S2 tier (5-fold $R^2 = 0.69$, LOO $0.67$, LOBO $0.613$), edging the neural network (LOBO 0.57) and every tree model. The equal-footing fair comparison sharpens the attribution (Fig.~\ref{fig:fair_heatmap}). First, the curated Wen descriptors---not the model class---carry the YS signal: moving from grain-only (S1) to $+$Wen (S2) lifts LOBO $R^2$ from ${\approx}0.39$ to ${\approx}0.6$ for the linear and the non-linear families alike (OLS $0.394 \to 0.582$; Lasso to 0.621; LightGBM to 0.615). Second, on equal terms linear matches or beats the trees cross-cluster: the best linear LOBO ($0.62$, Lasso at S2; ElasticNet reaches 0.617 at S4) is at or above the best non-linear LOBO (0.615, LightGBM at S2), and the gradient-boosting family peaks at 0.48. Third, the validation failure mode is on display in the tuned panel of SI Section~S5: XGBoost with 64 engineered features posts the highest LOO $R^2 = 0.729$ of any model but collapses to LOBO $R^2 = 0.574$---an overfitting tax of 0.155 $R^2$ units that random-split CV alone would never reveal. Dropping the rule-of-mixtures means ($\bar{\mu}$, $\delta_\mu$, $\bar{T}_m$, $\bar{a}$) from S4 barely moves the fit (ElasticNet LOBO $0.611 \to 0.617$), which strengthens the variance-over-means argument developed at Tier~5.
+Family~4 tests whether non-linear estimators improve prediction when the input set is held fixed. At S2, Lasso and LightGBM give nearly identical YS LOBO scores of 0.621 and 0.615. Their batch-bootstrap intervals also overlap: $[0.516,0.664]$ for Lasso and $[0.474,0.664]$ for LightGBM. This does not prove statistical equivalence, but it gives no evidence that non-linearity improves batch-level transfer at matched inputs. At S1, adding $\mathrm{SD}_{\mathrm{grain}}$ to the linear YS grain-size baseline changes LOO/LOBO $R^2$ from $0.406/0.373$ to $0.451/0.394$, a small gain that is much weaker than the M15 interaction result.
 
-For hardness, nothing in either panel generalizes cross-cluster. Within-cluster LOO scores look respectable (up to 0.48 for XGBoost at S2), but LOBO collapses to approximately zero or negative for every model at every tier (best: SVR at S1, LOBO $0.06$; adding Wen descriptors makes HV \emph{worse}, e.g.\ OLS LOBO $-0.86$ at S2). The LOO-versus-LOBO contrast is the entire story for HV: a practitioner reading only random-split CV would deploy a hardness model that has no cross-cluster validity at all.
+The archived nested ARMOTE-CV summary reports Bayesian ridge at S2 with 5-fold/LOO/LOBO $R^2=0.685/0.666/0.613$, which supports the same interpretation. The repository does not contain its generator or raw fold objects, and the available script tunes once on the full dataset. We therefore retain this result as secondary evidence rather than presenting it as independently reproduced nested CV.
 
-\begin{figure}[!htbp]
+The legacy 17-model panel gives a useful warning about model selection. Its XGBoost model reached LOO/LOBO $R^2=0.729/0.574$ after tuning and interaction construction on the complete dataset. Those values are not used in the primary ranking. The archived SHAP analysis explains that fitted model, but correlated descriptors and constructed interactions prevent causal interpretation of its feature rankings.
+
+The same panel reported stacking LOBO $R^2=0.707$, but its meta-features were record-level LOO predictions from models that could retain other records from the held-out batch. This leakage prevents a grouped-transfer interpretation. In the fitted XGBoost model, SHAP ranks $\Omega$, Mn$\times d^{-1}$, V$\times d^{-1}$, alternative grain-size transforms, and SSS descriptors highly. These attributions describe the selected predictor; they do not isolate mechanisms or prove a composition-dependent Hall--Petch slope.
+
+For HV, the Family~4 S1 matrix contains both $d^{-1/2}$ and $\mathrm{SD}_{\mathrm{grain}}$, whereas the Family~1 baseline contains only $d^{-1/2}$. With a linear estimator, this added feature changes LOO/LOBO $R^2$ from $0.136/-0.077$ to $0.232/-0.176$: it improves record-level interpolation but worsens batch transfer. LightGBM on S1 gives $0.323/0.112$. The comparison therefore changes both the feature set and estimator, and the LOO gain cannot be credited entirely to non-linearity. Descriptor-rich Family~4 input sets are generally negative under LOBO (Fig.~\ref{fig:fair}). The model can interpolate among related records, but it provides little evidence of reliable transfer to an unseen experimental batch.
+
+\begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{fair_comparison_LOBO_heatmap.png}
-  \caption{Equal-footing fair comparison: LOBO $R^2$ across the S1--S4 feature ladder (rows: models at zero-tuning defaults; columns: ladder tiers) for YS and HV. For YS the S1$\to$S2 (+Wen) step, not the model class, produces the lift; for HV every cell is near zero or negative beyond grain-only.}
-  \label{fig:fair_heatmap}
+  \caption{Family~4 matched-input LOBO comparison. For YS, the linear control is competitive with the non-linear estimators. For HV, many descriptor-rich combinations are negative under batch-level validation.}
+  \label{fig:fair}
 \end{figure}
 
-\subsection{Tier 5 -- symbolic regression: discovery, and the deployment failure mode}
-\label{sec:tier5}
+\subsection{Family 5: \familyfive}
 
-For yield strength, the best equations across the PySR grid come from the full ladder with unary operators (F3$+$O3). The accuracy solution reaches LOO $R^2 = 0.765$, LOBO $R^2 = 0.668$, BIC $= 690$ (the best of any model in this work), and external RMSE 120~\si{MPa} with six fitted constants, and it is singularity-safe under the audit. The parsimonious elbow solution, with two constants,
-\begin{equation}
-\label{eq:pysr_ys}
-\sigma_y = \bigl(\text{SD}_\text{grain} + 1016.5\bigr)\left(d^{-1/2} + \frac{0.306}{\Omega}\right),
-\end{equation}
-achieves LOO $R^2 = 0.674$ and LOBO $R^2 = 0.555$.
-Matched on identical curated-Wen inputs and identical scoring, PySR beats SISSO for YS (SISSO: LOO $0.485$, LOBO $0.347$ at four terms): the operator search---especially the O3 unary set---extracts more from the same inputs than SISSO's fixed feature-construction tiers. This inverts the impression given by the unmatched comparison of SI Section~S6, where SISSO looked stronger only because it searched a richer pre-engineered Oliynyk pool.
-Both engines nonetheless select the same physics: PySR places $\text{SD}_\text{grain}$ multiplicatively on the Hall--Petch term (Eq.~\ref{eq:pysr_ys}), and SISSO, once $\text{SD}_\text{grain}$ enters its pool, selects an explicit $d^{-1/2}\cdot\text{SD}_\text{grain}$ term for YS, the same form the Bayesian M15 model promotes (Section~\ref{sec:tier3}).
+Family~5 searches for compact analytical forms. For YS, the two accuracy-selected PySR equations using composition and processing each reach fixed-form LOO $R^2=0.808$ after their constants are refitted. Their archived mean per-batch LOBO scores are 0.696 and 0.689. A descriptor-based accuracy equation gives LOO/stored-LOBO $R^2=0.765/0.668$, while the descriptor-based elbow equation gives 0.674/0.555. These archived LOBO values are means of fold-wise $R^2$ and are not directly comparable with the pooled $Q^2$ values in Table~\ref{tab:primary}. The descriptor-based accuracy equation contains $\mathrm{SD}_{\mathrm{grain}}/\sqrt{|\Delta S_{\mathrm{mix}}-8.2739|}$. The internal minimum $\Delta S_{\mathrm{mix}}=8.3637$ is only 0.0898 above its pole. The protected square root keeps the expression real on either side, but does not remove the denominator singularity. This equation is therefore unsafe outside the observed descriptor envelope.
 
-The deployment failure mode appears at exactly this tier. On its original Oliynyk-style pool, SISSO discovers the four-parameter equation (SISSO Full)
-\begin{equation}
-\label{eq:sisso}
-\sigma_y = 120.5\,\frac{\sigma_r^2}{r_\text{range}} + 9356\,\frac{d^{-1/2}}{\Delta S_\text{mix}} + 1134\,\frac{\sigma_\chi^2}{\delta_\mu} - 43.3,
-\end{equation}
-with LOO $R^2 = 0.665$, RMSE 46.9~\si{MPa}, LOBO $R^2 = 0.380$, and BIC 714.
-The third term hides a latent singularity: Co, Fe, Mn, and Ni have shear moduli within $[75, 82]$~\si{GPa}, so ternaries from this group drive $\delta_\mu \to 0$ and predictions past 1000~\si{MPa}. On the 82-point external set the equation fails catastrophically (RMSE 421~\si{MPa}, $R^2 = -14.8$), driven entirely by Mn-containing ternaries. Re-running SISSO with $\delta_\mu$ excluded yields the bounded variant (SISSO Robust)
-\begin{equation}
-\label{eq:sisso_robust}
-\sigma_y = 4806\,\frac{\sigma_r^2}{\sigma_\text{TC}} + 9187\,\frac{d^{-1/2}}{\Delta S_\text{mix}} + 6111\,(\sigma_\chi^2 - \Phi_\text{VLC}) - 110.4,
-\end{equation}
-which sacrifices LOO $R^2$ ($0.609$, RMSE 50.7~\si{MPa}, $\Delta_\text{LOO} = 0.056$) and a hair of LOBO ($0.358$ vs.\ $0.380$) but achieves external RMSE 163~\si{MPa} with no singularities, and uniquely among the top equations,  no imputation, since it requires no $\text{SD}_\text{grain}$ measurement (Fig.~\ref{fig:external}). Augmenting the SISSO pool with $\text{SD}_\text{grain}$ instead gives a third option: LOO $0.560$, LOBO $0.429$, external RMSE 128~\si{MPa}, singularity-safe.
-The best safe PySR equation reaches external RMSE ${\approx}108$~\si{MPa}, but only by imputing $\text{SD}_\text{grain}$ on literature alloys that do not report it.
+All of these PySR values are post-selection scores: the equation structures were chosen from search fronts built with the full dataset. They are not nested estimates of symbolic-regression performance and cannot be ranked directly against the pre-specified models. The complexity--loss front from which they were taken is shown in Fig.~\ref{fig:pysr}. PySR BIC also counts fitted constants but not the cost of searching variables, operators, and structures, so it is not compared with the BIC of the pre-specified linear hierarchy. The SISSO equations have the same selection limitation. Grain-width terms recur across searches and are useful hypotheses, but not independent evidence of a mechanism: all searches use the same 94 records, and $d$ is correlated with $\mathrm{SD}_{\mathrm{grain}}$.
 
-For hardness, the bounded HV elbow equation---the compact F3$+$O2 form
-\begin{equation}
-\label{eq:hv_elbow}
-\text{HV} \approx 221.5 - 83.9\,\frac{6.93 - d}{\text{SD}_\text{grain}} + \frac{\Delta H_\text{mix}}{t_\text{hold}^2},
-\end{equation}
-with three fitted constants---survives refit cross-validation at LOO $R^2 = 0.727$ and LOBO $R^2 = 0.636$, making it the only HV model in this work that generalizes cross-cluster; its audited envelope excludes the near-singular regions $d \to 6.93~\si{\micro\meter}$ and $t_\text{hold} \to 0$. Its leading term is again grain geometry: hardness rises as the grain-size distribution tightens relative to its mean. No HV model generalizes externally under any engine: the most accurate PySR-HV and SISSO$+$SD equations contain descriptor-division singularities that blow up out-of-sample (external RMSE $10^3$--$10^4$~HV), the same failure mode as SISSO Full for YS, and even singularity-safe HV forms post strongly negative external $R^2$. Hardness prediction beyond the training clusters remains an open problem; the honest statement of that fact is itself a product of the audit.
-
-\begin{figure}[!htbp]
+\begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{fig08_pysr_pareto.png}
-  \caption{PySR complexity--loss Pareto front for YS on the F3 (curated-Wen) $+$ O3 grid cell. The elbow (parsimonious knee, Eq.~\ref{eq:pysr_ys}) and accuracy solutions are marked; marginal gains are exhausted well before the dataset's noise ceiling.}
-  \label{fig:pysr_pareto}
+  \caption{Family~5 PySR complexity--loss front. Choosing an elbow or accuracy equation after viewing this front places structure selection outside the later constant-refit CV, so the result must be labeled post-selection.}
+  \label{fig:pysr}
 \end{figure}
 
-\begin{figure*}[!tp]
+Refitting the selected HV structure gives
+\begin{equation}
+\begin{split}
+H_V={}&222.3+84.5\frac{\SI{6.93}{\micro\meter}-d}
+                         {\mathrm{SD}_{\mathrm{grain}}}\\
+     &-1.005\frac{\Delta H_{\mathrm{mix}}}{t_{\mathrm{hold}}^2}.
+\end{split}
+\label{eq:hvcorr}
+\end{equation}
+The three coefficient bootstrap intervals are $[202.9,240.1]$, $[69.4,98.3]$, and $[-1.218,-0.803]$. The corresponding bootstrap means and standard deviations are $221.82\pm9.64$, $84.12\pm7.34$, and $-1.006\pm0.106$; each interval excludes zero, conditional on the selected structure. The full-data fit gives $R^2=0.744$ and RMSE $=16.90$ HV. With the structure fixed and only its constants refitted, 5-fold/LOO/LOBO $R^2=0.725/0.727/0.636$, with RMSE $=17.50/17.46/20.16$ HV. The batch-bootstrap interval for LOBO $R^2$ is $[0.329,0.765]$.
+
+The equation retains useful batch-held-out performance, but its structure was selected after viewing the full-data search fronts. The zero at $d=\SI{6.93}{\micro\meter}$ is not a singularity; the unsafe limits are $\mathrm{SD}_{\mathrm{grain}}=0$ and $t_{\mathrm{hold}}=0$. The observed data remain away from both limits. The two non-constant terms have different provenance risks. Hold time is fixed at 0.5~h for all 35 B-campaign records and takes values of 1, 2, 4, or 8~h in Campaign C, so hold time separates campaign with AUC $=1.000$ and cannot be identified within Campaign B. The combined $\Delta H_{\mathrm{mix}}/t_{\mathrm{hold}}^2$ term also separates campaign strongly (AUC $=0.970$). In contrast, $(6.93-d)/\mathrm{SD}_{\mathrm{grain}}$ is nearly campaign-neutral (AUC $=0.533$). The hold-time term must therefore be treated as a campaign proxy in these data; the grain-width term remains a post-selected, correlated microstructure hypothesis. Testing either term as a mechanism requires a prospectively frozen equation and direct distribution descriptors such as $\mathrm{SD}/d$, lognormal width, or $E[d^{-1/2}]$.
+
+The SISSO comparison also separates numerical safety from predictive accuracy. SISSO Full places $\delta_\mu$ in a denominator and becomes unstable when constituent shear moduli are similar. Removing that term lowers the aggregate literature RMSE from 420.6 to \SI{162.9}{MPa}. The bounded form is numerically safer, but its aggregate $R^2=-1.37$ is still unsuitable for prediction.
+
+Additional symbolic controls give lower or unstable results. An expanded SISSO search reports LOO/LOBO $R^2=0.604/0.350$ when the selected transforms change across folds. A universal-operator EML control gives LOO $R^2=0.321$ at depth one and becomes unstable at greater depth. A recalibrated pure-metal descriptor relation gives LOO $R^2=0.346$. These controls suggest that restricted operators can provide useful inductive bias, but the archived files do not establish that every structure-selection step was nested.
+
+\subsection{Hardness--yield correspondence}
+
+The different YS and HV results motivate a direct comparison of the two properties. Across the 93 paired records, $C_{\mathrm{eff}}=5.13\pm1.36$, corresponding through Eq.~\eqref{eq:napp} to $n_{\mathrm{app}}\approx0.15\pm0.07$ after propagating the reported $C_{\mathrm{eff}}$ summary. The global Spearman correlation is 0.46, although the within-batch correlations range from 0.70 to 0.95. Pooling weakens, but does not reverse, the association; this is aggregation-induced attenuation rather than a strict Simpson paradox. The partial rank correlation after controlling for $d$ is only 0.24.
+
+The archived descriptive relation is $\log C_{\mathrm{eff}}=1.36+0.10\log d-2.06x_V$, with $d$ entered in the fitted numerical units. It is not dimensionally invariant and has not been prospectively validated. Ranking agreement also depends on the cutoff (Fig.~\ref{fig:hvrank}): 2 of the 5 hardest alloys are among the 5 strongest, increasing to 8/10 and 11/20 for broader sets. HV may help rank alloys within a narrow composition and processing window, but the results do not support a single transferable HV-to-YS conversion or identify V as a causal source of the pooled attenuation.
+
+\begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{fig_external_ab.png}
-  \caption{External validation on 82 independent literature points. \textbf{(Left)}~SISSO Full (Eq.~\ref{eq:sisso}): catastrophic failure ($R^2 = -14.8$, RMSE $= 421$~\si{MPa}) driven by the $\sigma_\chi^2/\delta_\mu$ singularity on Mn-containing ternaries. \textbf{(Right)}~SISSO Robust (Eq.~\ref{eq:sisso_robust}): the pathology disappears (RMSE $= 163$~\si{MPa}, bias $-32$~\si{MPa}). M3 (not shown) yields RMSE $= 133$~\si{MPa}.}
-  \label{fig:external}
-\end{figure*}
+  \includegraphics[width=0.90\columnwidth]{fig_hv_ys_rank.png}
+  \caption{HV rank versus YS rank by batch. Strong within-batch ordering becomes weaker after batches are pooled because their composition and processing coverage differs.}
+  \label{fig:hvrank}
+\end{figure}
 
-\subsection{Three engines converge on grain-size heterogeneity}
-\label{sec:convergence}
+\subsection{Literature stress test}
 
-The single most consequential physical finding is structural, not numerical: three independent search mechanisms: PySR's genetic programming, SISSO's sparse operator screening, and the Bayesian M-model hierarchy, each arrive at a $\text{SD}_\text{grain}\cdot d^{-1/2}$ coupling, for both properties where applicable. PySR multiplies the Hall--Petch term by $(\text{SD}_\text{grain} + \text{const})$ (Eq.~\ref{eq:pysr_ys}); SISSO selects $d^{-1/2}\cdot\text{SD}_\text{grain}$ explicitly for both YS and HV once the feature is available; and M15 wins the Bayesian comparison by adding exactly this interaction (LOO $=$ LOBO $= 0.694$). Because the three engines share no search mechanism, their agreement is evidence that grain-size heterogeneity, not just the mean grain size, governs strengthening in these alloys: real polycrystals carry a distribution of grain sizes, the finest grains yield last and carry disproportionate load, and a single-$d$ Hall--Petch law cannot express that. Convergent evidence of this kind is our proposed criterion for reading an ML-discovered term as physics rather than curve-fitting.
+The E1 literature set provides a final stress test outside the experimental program. On its 54 direct-strength records, M3 has the lowest RMSE, \SI{149.5}{MPa}, but $R^2=-0.508$. SISSO Robust gives RMSE $=\SI{160.0}{MPa}$ and $R^2=-0.726$, while the small-denominator term in SISSO Full contributes to $R^2=-5.084$. All three models are worse than predicting the E1 mean (Table~\ref{tab:external}). The test is useful for exposing domain sensitivity and unsafe equations, but not for estimating unbiased external performance: E1 mixes sources and test modes and was filtered using outcomes.
 
-The discovered term has a substantial theoretical pedigree, although---to our knowledge---no prior study has used the measured grain-size standard deviation as an explicit predictor. Classical dispersion micromechanics established decades ago that yield stress depends on the width of the grain-size distribution, not only its mean: volume-weighted Hall--Petch averaging~\cite{Kurzydlowski1990}, self-consistent models over lognormal distributions in which the distribution's standard deviation enters the yield stress explicitly~\cite{Berbenni2007}, and experimental work on welded steels showing that mean-$d$ Hall--Petch fits mispredict strength when the distribution broadens~\cite{Lehto2014}. That literature predicts \emph{softening} as the distribution widens at fixed mean; the heterostructure literature predicts the opposite, with engineered wide or bimodal grain-size distributions generating hetero-deformation-induced (HDI) back-stress strengthening above rule-of-mixtures expectations~\cite{Wang2002,ZhuWu2019}. Our fitted signs place the two properties on opposite sides of this competition: the PySR yield-strength equation (Eq.~\ref{eq:pysr_ys}) strengthens with $\text{SD}_\text{grain}$, HDI-like, while the hardness elbow (Eq.~\ref{eq:hv_elbow}) softens as the distribution widens at fixed $d$, as classical dispersion theory predicts---a contrast consistent with the property-specific-modeling thesis of Section~\ref{sec:contrast}.
+The other literature classes give a different appearance because they are not independent direct measurements. On the three E2 values reconstructed from published Hall--Petch fits, M3 and SISSO Robust give descriptive $R^2=0.677$ and 0.849, with RMSE $=49.0$ and \SI{33.5}{MPa}. With $n=3$, these $R^2$ values are not interpretable as generalization estimates. On the 25 E3 hardness-converted proxies, the same models give $R^2=-2.157$ and $-9.642$. Pooling E1--E3 gives M3, SISSO Robust, and SISSO Full $R^2=-0.580$, $-1.373$, and $-14.813$, respectively. Across all 18 stored PySR YS variants, the pooled E1--E3 $R^2$ is also negative; the best is $-0.031$ (RMSE $=\SI{107.4}{MPa}$), and the highlighted descriptor accuracy equation gives $-0.295$ (RMSE $=\SI{120.4}{MPa}$). These pooled values are reported only as numerical stress tests; they do not increase the amount of direct external evidence.
 
-An independent linear check points the same way. PCA-OLS on the curated-Wen$+$$\text{SD}_\text{grain}$ set (six components, 88\% of variance) is stable if unspectacular (5-fold $0.525$, LOO $0.516$, LOBO $0.441$), and its reconstructed importances rank $\Delta H_\text{mix}$, $d^{-1/2}$, $\Delta\chi$, and $\Omega$ at the top---the same features PySR's compact YS equations select. Two unrelated methods agreeing on the governing variables indicates those variables are a property of the data, not of any one method.
-
-\subsection{Hardness--strength correspondence and its limits}
-\label{sec:tabor}
-
-The effective Tabor factor across the dataset is $C_\text{eff} = \text{HV(MPa)}/\sigma_y = 5.13 \pm 1.36$, well above the classical 3 (Fig.~\ref{fig:tabor}); within the generalized Tabor framework this measures a flow-stress ratio $\sigma_f(0.08)/\sigma_y = 1.71$ and an early-strain hardening exponent $n_\text{eff} = \ln(C_\text{eff}/3)/\ln 40 \approx 0.15 \pm 0.07$, consistent with the strong work hardening of FCC HEAs sampled over the early post-yield regime. The elevated ratio agrees with HEA-wide compilations, which find that HV/3 tracks the \emph{ultimate} rather than the yield strength in work-hardenable FCC HEAs~\cite{Tian2021,Fan2021}: the constraint factor itself is not anomalous; the excess sits in the hardening between yield and the representative indentation strain. The per-alloy spread implies that no single conversion factor reliably transforms HV to $\sigma_y$ across alloys ($\pm 25\%$ at fixed HV).
-
-Used as a ranking proxy, HV shows a Simpson's paradox: the global Spearman correlation between HV and YS ranks is $\rho = 0.46$ while per-batch correlations span 0.70--0.95. The campaigns isolate the cause: pooling the fixed-processing B-campaign preserves the ranking ($\rho = 0.95$), pooling the processing-swept C-campaign destroys it ($\rho = 0.09$), yet conditioning on grain size does not recover coherence (partial $\rho(\text{HV},\text{YS}\,|\,d) = 0.24$). Composition---V especially---is the primary scrambler, with grain size acting as a confounder through its shared Hall--Petch correlation with both properties; the empirical fit $\log C_\text{eff} = 1.36 + 0.10\,\log d - 2.06\,x_V$ quantifies both effects. HV therefore ranks alloys reliably only within a narrow composition window; cross-campaign screening should measure $\sigma_y$ directly or apply a V-content correction. Full rank-correlation analysis is given in SI Section~S7.
-
-\begin{figure*}[!tp]
-  \centering
-  \includegraphics[width=\textwidth]{fig09_tabor_relation.png}
-  \caption{Hardness--yield strength correspondence. (a)~HV versus $\sigma_y$ by batch against the classical Tabor line. (b)~Distribution of $C_\text{eff} = \text{HV(MPa)}/\sigma_y$ (mean 5.13 vs.\ classical 3). (c)~$C_\text{eff}$ versus $d^{-1/2}$ ($r = -0.39$). (d)~$C_\text{eff}$ versus V fraction ($r = -0.47$).}
-  \label{fig:tabor}
-\end{figure*}
-
-\subsection{Deployment-aware model selection}
-\label{sec:verdict}
-
-No single model wins every criterion, and the winner changes with the deployment constraint (Table~\ref{tab:verdict}). For peak YS accuracy the PySR accuracy equation leads (LOO 0.765, LOBO 0.668); for the highest cross-cluster closed form with $\text{SD}_\text{grain}$ available, M15 (LOO $=$ LOBO $= 0.694$); for deployment without grain-size-distribution measurements, M3 (external RMSE 133~\si{MPa}, no imputation) or SISSO Robust (163~\si{MPa}, bounded, descriptor-only). For hardness the bounded $\text{SD}_\text{grain}$ elbow (Eq.~\ref{eq:hv_elbow}) is the only cross-cluster survivor, composition models are not recommended at all, and no model is externally reliable. Reporting this table---rather than a single leaderboard number---is itself one of the framework's guardrails.
-
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\caption{Best-model verdict by deployment criterion. Every cross-validated entry reports both LOO and LOBO; external RMSE in MPa (YS). ``Imputation'' flags models requiring $\text{SD}_\text{grain}$ values that independent literature does not report.}
-\label{tab:verdict}
+\caption{Legacy E1 direct-strength literature stress test. Negative $R^2$ indicates performance worse than predicting the E1 mean.}
+\label{tab:external}
 \small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}llp{8.6cm}@{}}
+\begin{tabular}{lrrr}
 \toprule
-Property & Criterion & Recommended model \\
+Model & $R^2$ & RMSE (MPa) & Bias (MPa) \\
 \midrule
-YS & Peak accuracy & PySR accuracy eq.\ (LOO 0.765, LOBO 0.668, BIC 690, ext.\ 120) \\
-YS & Highest cross-cluster closed form ($\text{SD}_\text{grain}$ available) & M15 Bayesian composition-HP $+$ $\text{SD}_\text{grain}\cdot d^{-1/2}$ (LOO $=$ LOBO $=$ 0.694) \\
-YS & Deployable interpretable, no imputation & M3 composition-HP (LOO 0.652, LOBO 0.625, ext.\ 133, stacking weight 0.902) \\
-YS & Parsimony $+$ interpretability & SISSO Full (4 params, BIC 714) --- but $\delta_\mu$ singularity; deploy the Robust variant \\
-YS & Honest cross-cluster linear ML & Lasso/ElasticNet on the fair ladder (LOBO 0.62) / Bayesian ridge, ARMOTE S2 (LOBO 0.613) \\
-YS & Deployment without $\text{SD}_\text{grain}$ or composition fractions & SISSO Robust (ext.\ 163, LOBO 0.358, singularity-safe, no imputation) \\
-YS & Best external error ($\text{SD}_\text{grain}$ available/imputed) & PySR (${\approx}108$) / SISSO$+$SD (128) / M3 (133, no imputation) \\
-\midrule
-HV & Best deployable in-sample & $\text{SD}_\text{grain}$ Hall--Petch elbow, Eq.~\ref{eq:hv_elbow} (LOO 0.73, LOBO 0.64, 3 params) \\
-HV & Linear/composition models & Not recommended --- all M-models LOO $\leq$ 0.14 (composition overfits HV) \\
-HV & External generalization & None reliable --- division terms create singularities (ext.\ RMSE $10^3$--$10^4$) \\
-HV & Mechanistic reading & Grain-geometry-dominated; Tabor $C_\text{eff} = 5.13$ \\
+F3 M3 & $-0.508$ & 149.5 & $-76.6$ \\
+F5 SISSO Robust & $-0.726$ & 160.0 & $-61.3$ \\
+F5 SISSO Full & $-5.084$ & 300.3 & $+50.0$ \\
 \bottomrule
 \end{tabular}
-\end{table*}
-
-\subsection{Property-specific modeling is essential -- the YS versus HV contrast}
-\label{sec:contrast}
-
-Carrying both properties through the identical ladder yields the capstone contrast of Table~\ref{tab:contrast}: the same features, the same validation, and the same model families give opposite answers for YS and HV. Composition is signal for YS (it shifts $\sigma_0$; M3 LOBO 0.625) and noise for HV (all M-models LOO $\leq 0.14$); YS models generalize cross-cluster (LOBO 0.61--0.69) while for HV only the grain-based equation survives (0.64) and everything else is at or below zero; YS deploys externally at 108--163~\si{MPa} RMSE while no HV model deploys at all. A universal strength--hardness model would necessarily mislead for at least one property, and the Tabor analysis shows the two are linked by a composition- and grain-size-dependent factor, not a constant. That the same protocol exposes this contrast--rather than papering over it with a pooled score---is the practical payoff of property-specific modeling under honest validation.
-
-\begin{table*}[t]
-\centering
-\caption{Identical methodology, opposite conclusions: the YS versus HV contrast.}
-\label{tab:contrast}
-\small
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Axis & Yield strength & Vickers hardness \\
-\midrule
-Governing physics & composition ($\sigma_0$) $+$ Hall--Petch backbone & grain geometry ($\text{SD}_\text{grain}\cdot d^{-1/2}$) \\
-Composition effect & shifts $\sigma_0$ --- helps (M3 LOBO 0.625) & overfits (all M-models LOO $\leq$ 0.14) \\
-Best model & PySR equation / M15 / M3 Hall--Petch & $\text{SD}_\text{grain}$ Hall--Petch elbow (Eq.~\ref{eq:hv_elbow}) \\
-Cross-cluster (LOBO) & generalizes (0.61--0.69) & only grain-based survives (0.64); rest $\leq 0$ \\
-External / deployment & M3 133, SISSO Robust 163~\si{MPa} (no imputation) & no model generalizes externally \\
-Strength--hardness link & --- & Tabor $C_\text{eff} = \text{HV}/\sigma_y = 5.13$ (HV $\neq 3\sigma_y$) \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-
-% 5. DISCUSSION
+\end{table}
 
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{Which method suits which property, and why}
-\label{sec:family_reading}
+\subsection{Yield strength across the five families}
 
-Each model family earns a specific role rather than a rank.  Classical Hall--Petch is the indispensable floor: it anchors the physics, calibrates expectations (LOO 0.41 for YS, 0.14 for HV), and exposes through its batch-to-batch parameter variation, the need for composition terms and cluster-out validation. The linear M-models are the interpretability workhorses for YS: M3 gives a mechanistically transparent $\sigma_0(\text{comp}) + k_\text{HP}\,d^{-1/2}$ partition whose coefficients can be checked against theory (V's dominance matches parameter-free Varvenne--Curtin predictions~\cite{Yin2020}), and it deploys externally without imputation. Physics-descriptor hierarchies serve as audits: the SSS models fail as predictors but their failure is informative, locating the error in Vegard's-law inputs rather than the theoretical framework---VLC with DFT-derived misfit volumes achieves quantitative accuracy for equimolar alloys~\cite{Varvenne2016,Moitzi2022}, and with experimentally measured lattice misfits and elastic constants it rationalizes the hardness variation across 24 single-phase FCC Co-Cr-Fe-Mn-Ni alloys~\cite{Bracq2019}---and the partial-$r$ redundancy test disciplines what a descriptor is allowed to claim. Non-linear ML is the stress test: if a tree ensemble with every feature and a tuning budget cannot beat a linear model cross-cluster, the relationship in the deployable regime is effectively linear in the right features, and the trees' LOO edge is measurement of batch memorization rather than physics. Symbolic regression is the discovery engine and the sharpest deployment risk at once: it produced both the best YS model in this work and the most catastrophic external failure, in the same family, distinguishable only by the audit.
+The YS results form a clear progression. Family~1 establishes a useful grain-size baseline, but several nearby exponents fit almost equally well. Family~2 shows that the tested SSS and Wen/PCA representations do not provide a transferable improvement with the available approximations. Family~3 supplies the largest verified gain: M3 combines a composition-dependent intercept with a shared Hall--Petch slope, while M15 adds a grain-width interaction and improves LOBO from 0.625 to 0.694. The additive $\mathrm{SD}_{\mathrm{grain}}$ control does not transfer as well, so the result is specific to the interaction. Family~4 reaches similar batch-held-out accuracy with a linear control and a non-linear model, so estimator flexibility is not the source of the gain. Family~5 produces compact equations and further grain-width hypotheses, but its equation search was not nested and its literature performance is negative. M15 is the strongest verified low-complexity YS model when grain-distribution width is measured; M3 remains the simpler choice when only mean grain size is available. Neither is a universal Hall--Petch law.
 
-The property determines the winner because the underlying physics differs. Yield strength is a yield-point property with an additive friction-stress structure that composition shifts smoothly, so linear-in-composition models and compact symbolic forms both work. Vickers hardness convolves yield with early-strain work hardening ($C_\text{eff} = 3\,\sigma_f(0.08)/\sigma_y$), and work-hardening capacity in these alloys is governed by grain geometry more than by chemistry, hence the grain-geometry dominance, the failure of composition models, and the collapse of cross-cluster generalization for every HV model except the $\text{SD}_\text{grain}$ form.
+\subsection{Hardness requires a different model}
 
-\paragraph{Four failure modes, four guardrails}
-\label{sec:guardrails}
+The same sequence gives a different result for HV. Mean grain size, physics descriptors, composition, and the tested non-linear models all transfer poorly across batches. Adding $\mathrm{SD}_{\mathrm{grain}}$ linearly improves LOO but worsens LOBO. The post-selected Family~5 fixed form performs well under LOBO after coefficient refitting, but its structure selection was not nested. Its grain-width term is nearly campaign-neutral, whereas its hold-time term closely tracks campaign identity. These terms are worth testing separately, but they do not yet define a hardness law. The variable $C_{\mathrm{eff}}$ and the rank analysis also show why HV should not be treated as a direct substitute for YS across different composition and processing domains.
 
-The framework's central claim is that each measured failure mode has an inexpensive guardrail. The physics failure (SSS overprediction by 2--28$\times$) is guarded by using ML as auditor: benchmark the physics model on the dataset before trusting it as a feature, and prefer variance-type descriptors over rule-of-mixtures means, which are inert across concentrated alloys that share similar averages by design ($\sigma_r^2$ varies 30-fold across our panel while $\bar{W}$ varies by $\pm 12\%$). The descriptor failure (redundancy once composition is present, partial $r < 0.10$) is guarded by the partial-correlation audit, run before any claim that a hand-built descriptor does independent work. The validation failure (LOO flatters; XGBoost $0.729 \to 0.574$; every HV model collapsing under LOBO) is guarded by reporting 5-fold, LOO, and LOBO together and headlining the LOO$\to$LOBO gap---materials datasets are almost always clustered by campaign, family, or synthesis route; cluster-out validation is the honest deployment test~\cite{Meredig2018}; and dataset redundancy compounds the optimism, since near-duplicate compositions leak between random folds~\cite{LiMDHIT2024}, exactly the pseudo-replication our 23\% shared-composition fraction produces under LOO. The deployment failure (SISSO Full's hidden $\delta_\mu$ pole; the PySR-HV division singularities) is guarded by the singularity audit on independent data and by preferring bounded functional forms; the cost of the guardrail is small ($\Delta$LOO $= 0.056$ for SISSO Robust) against a five-fold external-error reduction.
+\subsection{The scientific conclusion depends on validation scale}
 
-\paragraph{$\sigma_0$ versus $k_\text{HP}$, and what the interaction features mean}
-\label{sec:sigma0_khp}
+The same fitted model can support different conclusions at different validation scales. The clearest examples are for HV: classical Hall--Petch changes from LOO $R^2=0.136$ to LOBO $R^2=-0.077$, LightGBM S1 falls from 0.323 to 0.112, and the legacy tuned XGBoost model falls from 0.729 to 0.574. In Family~2, global PCA gives LOO/LOBO $R^2=0.516/0.441$, whereas fold-contained PCA gives 0.480/0.362, showing how preprocessing and grouping compound. In contrast, M3 changes only modestly from 0.652 to 0.625, and M15 gives 0.694 under both protocols. The Family~5 HV fixed form retains $R^2=0.636$ across batches, but this estimate remains conditional on a structure selected from the full dataset and includes a hold-time term confounded with campaign. LOBO is a useful internal transfer test, but it is not equivalent to deployment because the batches share program-level synthesis, characterization, and design practices.
 
-Tree-model importance analyses (SI Section~S5) rank composition$\times$grain-size interaction features highly, which could be misread as a composition-dependent Hall--Petch slope. The direct tests say otherwise: per-alloy $k_\text{eff}$ regression on composition gives $R^2 = 0.006$, and M3 with a single global slope matches the flexible alternatives. The interactions act as proxies for the composition-dependent $\sigma_0$, not as evidence that $k_\text{HP}$ varies. Physical mechanisms for composition-dependent slopes exist---solute segregation modifying boundary cohesion and slip transmission~\cite{Cordero2016,He2014}, demonstrated dramatically by the Mo-segregation-driven $k_\text{HP} = 1100$~MPa$\cdot\mu$m$^{1/2}$ of Ref.~\cite{LiKHP2024}---but at $n = 93$, with single-phase chemistries selected against segregation and with the present design's confounding between composition and processing (SI Section~S8), any such effect sits below the detection threshold. The genuine grain-size refinement of this work lies elsewhere: in the second moment of the grain-size distribution. $\text{SD}_\text{grain}\cdot d^{-1/2}$ is selected by three independent engines, survives cluster-out validation (M15, LOO $=$ LOBO $= 0.694$), and carries a physical reading---load partitioning across a grain-size distribution---that classical single-$d$ Hall--Petch cannot express. Notably, this is the constructive face of the same SR machinery whose destructive face is the singularity: handled with the audit, the engines discover physics; without it, they manufacture pathology.
+M15 is therefore the best verified YS model for record-level interpolation and new-batch prediction within the combined experimental program when $\mathrm{SD}_{\mathrm{grain}}$ is available. M3 is a simpler alternative that does not require grain-distribution width. Neither model is a universal Hall--Petch law or a strict test on unseen compositions. Lasso is also useful as a matched predictive control, although it has less direct physical structure. The Family~5 equations remain discovery hypotheses because their structure selection was not nested and their literature evidence is unfavorable. For HV, Eq.~\eqref{eq:hvcorr} is the strongest candidate within the sampled batches, but it should be frozen and tested prospectively before it is treated as a transferable hardness law.
 
-\paragraph{A transferable protocol, not an FCC-HEA result}
-\label{sec:protocol}
+\subsection{Physical interpretation without overreach}
 
-Although demonstrated on FCC HEAs, nothing in the protocol is specific to them, and Table~\ref{tab:protocol} states what transfers and why. What is FCC-HEA-specific: the coefficients (e.g., $k_\text{HP} = 766$~MPa$\cdot\mu$m$^{1/2}$, $\alpha_V = +291$~\si{MPa}, $C_\text{eff} = 5.13$), the V-dominated $\sigma_0$ signal, and the particular winning equations. What is general: the feature-ladder logic (every structural-property problem has a physics backbone plus optional descriptors), the redundancy audit (any descriptor derived from composition can be encoded by a flexible model given composition), the variance-over-means principle (means wash out in concentrated or heterogeneous systems), cluster-out validation (materials data are clustered wherever they come from campaigns or families), the singularity audit (any deployed analytical model in any field), and multi-engine convergence as the criterion for reading a discovered term as mechanism. The preference for compact interpretable forms over black-box models in deployment also has direct empirical support beyond this study: in systematic benchmarks on materials datasets, interpretable models trail black-box regressors only marginally when interpolating and match or beat them in a substantial fraction of extrapolation tasks~\cite{Muckley2023}---and extrapolation is exactly the regime alloy design occupies. Readers working in BCC HEAs, conventional multicomponent alloys, ceramics, or composites can lift the workflow directly: each new system re-runs the staircase rather than starting over.
+The data support a grain-size baseline for YS together with additional composition- and grain-distribution-associated signals. They do not uniquely attribute those signals to friction stress, solute misfit, boundary chemistry, processing, or hetero-deformation-induced strengthening. The apparent preference for a constant Hall--Petch slope may result from limited identifiability rather than true invariance. $\mathrm{SD}_{\mathrm{grain}}$ appears in M15, the Family~4 feature sets, and several symbolic expressions, but this recurrence is not independent confirmation because the models use the same records and correlated predictors. Raw standard deviation scales with the mean and can also depend on mapped area, grain count, weighting, and segmentation.
+
+YS and HV are not interchangeable labels. Across the 93 paired records, the effective ratio $\mathrm{HV(MPa)}/\sigma_y$ is $5.13\pm1.36$. Strong within-batch rank correlations become weaker when the campaigns are pooled. A single Tabor conversion cannot remove the effects of work hardening, constraint, processing, and campaign structure. Separate models and validation are needed for each property, even though both measurements arise from related plastic-deformation processes.
+
+\subsection{Best practices for physics-informed property ML}
+
+The five families are most useful as a sequence of scientific questions, not as a leaderboard. Family~1 defines a physically interpretable baseline. Family~2 tests whether physics-based descriptors explain the remaining error. Family~3 asks what measured composition and processing add. Family~4 tests estimator flexibility using matched inputs and budgets. Family~5 generates closed-form hypotheses and therefore requires the strictest audit of selection and domain.
+
+For all five families, the validation split must match the proposed use. LOO measures record-level interpolation and must be interpreted alongside the repeated-composition audit. LOBO is needed for claims about a new experimental iteration. Preprocessing, feature selection, hyperparameter tuning, and equation discovery must all occur within that validation boundary. Uncertainty estimates should preserve experimental clusters. Direct measurements should remain separate from values reconstructed from equations or converted from other properties. External sets should be defined before outcomes are inspected and should document composition, processing, grain statistics, phase state, temperature, and test mode. Closed forms also require a singularity audit over both observed and intended deployment domains.
+
+Table~\ref{tab:evidence} maps each claim made in this work onto the evidence that supports it and the interpretation that evidence allows. Mechanistic claims require more than agreement among predictive models. A proposed term should survive alternative parameterizations, dimensional analysis, propagation of measurement uncertainty, and a prospective experiment that varies the proposed cause independently of confounders. For the present grain-width hypothesis, such an experiment should hold mean grain size constant while changing the distribution shape. It should also record complete EBSD distributions and sampling metadata, with the equation frozen before testing.
 
 \begin{table*}[t]
 \centering
-\caption{The transferable best-practices protocol: each guardrail, the failure mode it prevents (as measured in this work), and why it transfers beyond FCC HEAs.}
-\label{tab:protocol}
+\caption{Claim--evidence map after grouped-validation and provenance audits.}
+\label{tab:evidence}
 \small
-\setlength{\tabcolsep}{5pt}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{4.8cm}>{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}p{3.4cm}p{5.4cm}X@{}}
 \toprule
-Best practice & Guards against & Why it transfers \\
+Claim & Evidence & Supported interpretation \\
 \midrule
-Build a feature ladder from the physics backbone up, scoring each tier & Reading a rich-model win as physics when it is feature engineering & Every structural-property problem has a known backbone $+$ optional descriptors; the ladder isolates marginal value \\
-Audit descriptor redundancy (partial correlation) before trusting a descriptor & Crediting hand-built descriptors that composition already encodes (here partial $r < 0.10$) & Holds wherever descriptors are derived from composition (ceramics, conventional alloys, MOFs) \\
-Prefer variance/heterogeneity descriptors over rule-of-mixtures means & Means washing out the signal ($\bar{\mu}$, $\bar{T}_m$, $\bar{a}$ inert; $\text{SD}_\text{grain}$ decisive) & General to concentrated solid solutions and microstructurally heterogeneous materials \\
-Report 5-fold $+$ LOO $+$ cluster-out (LOBO) $+$ external; headline the LOO$\to$LOBO gap & Random-split CV overselling models that fail on new regions (XGBoost $0.729 \to 0.574$) & Materials datasets are almost always clustered by campaign, family, or route \\
-Singularity/deployment audit of every closed form on independent data & In-sample-beautiful equations that diverge in deployment (ext.\ RMSE 421~\si{MPa}) & Any deployed analytical model in any field; bounded variants are the fix \\
-Trust a mechanism only when independent engines converge on it & Mistaking a single-method fit for physics & If unrelated search strategies rediscover the same form ($\text{SD}_\text{grain}\cdot d^{-1/2}$), the effect is real \\
+Composition improves YS & M3 LOO/LOBO $R^2=0.652/0.625$ & Supported for record- and batch-level prediction within the present program \\
+Grain-width interaction improves YS & Additive SD gives $0.668/0.595$; M15 gives $0.694/0.694$ & Supported as a predictive interaction when SD is measured; mechanism not identified \\
+Non-linearity improves YS & Lasso/LightGBM LOBO $0.621/0.615$ & No demonstrated advantage for the tested non-linear model at matched S2 inputs \\
+The HV closed form generalizes & Fixed-form LOO/LOBO $0.727/0.636$; post-selected structure & Strongest internal HV candidate; prospective validation is still required \\
+Grain-width terms identify a mechanism & Shared data, correlated $d$ and $\mathrm{SD}_{\mathrm{grain}}$, post-selected forms & Testable hypothesis requiring controlled microstructure and prospective validation \\
+Models deploy to literature alloys & All evaluated E1 stress-test $R^2<0$; set has mixed modes and outcome-informed curation & No deployment claim and no unbiased external estimate \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-\paragraph{Limitations}
-\label{sec:limitations}
+\subsection{Limitations and reproducibility}
 
-The 94 alloys come from two BO campaigns at a single group with shared synthesis and characterization protocols, so generalization to other processing classes (severe plastic deformation, additive manufacturing) is untested, and the composition space is unevenly sampled (Al restricted to 0--4~at.\%, Ni-rich throughout). BO-driven sampling means the alloys concentrate near campaign-specific Pareto fronts rather than covering the simplex~\cite{Mulukutla2026BRAVE}, and LOBO folds differ in difficulty (hull coverage 0.29--0.87 across held-out batches); per-batch LOBO breakdowns are given in SI Section~S8. Although M15 and the SR equations promote $\text{SD}_\text{grain}$, the term's external validation is limited because independent literature rarely reports grain-size distributions, which is a reporting recommendation of this work. Monte Carlo and bootstrap diagnostics bound the parameter sensitivities (e.g., $k_\text{HP}$ shifts $\pm 39\%$ under grain-size measurement perturbation, M3 composition coefficients under $\pm 15\%$); the within-replicate design does not support a clean test of $k_\text{HP}(\text{comp})$ at fixed processing. The 23\% of alloys sharing exact compositions constitutes the dataset-redundancy problem known to inflate random-split metrics~\cite{LiMDHIT2024}; LOBO is our structural control for it, since shared compositions never straddle a batch boundary's train/test split within a campaign iteration. Finally, hyperparameter tuning in the legacy 17-model panel used the full dataset before LOO, an optimism we quantified and then eliminated in the nested ARMOTE-CV and zero-tuning fair-comparison panels.
+The analysis includes six batches from two sequential campaigns within one research program. Bayesian-optimization sampling narrows the observed domain, and the composition and processing coverage differs among batches. Exact replicates are limited, processing and composition are not orthogonal, and complete grain-size distributions are reduced to a mean and standard deviation. The literature stress set is not suitable for model selection or an external accuracy claim. A future benchmark should be registered before prediction and should use consistent tensile definitions and complete processing metadata.
 
-
-
-
-% 6. CONCLUSIONS
-
-
-
-
+The revised repository separates reproducible results from archival, post-selected, and proxy-based results. The scripts \texttt{main2\_validation.py} and \texttt{verify\_sdgrain\_models.py} generate the primary grouped-validation table and the M3/M15 grain-width audit from the prepared descriptor dataset. The standard OLS, information-criterion, and grouped-CV results for M15 are independently reproduced here. Its earlier Bayesian stacking weight and PSIS-LOO comparison remain archival because that probabilistic analysis was not regenerated. Nested ARMOTE-CV and true outer-loop PySR performance also remain unconfirmed until their fold-level generators and predictions are available.
 
 \section{Conclusions}
 \label{sec:conclusions}
 
-Machine-learning property prediction in sparse, clustered materials data is not unsafe by nature; it is unsafe by default. This work turned that observation into a working protocol and demonstrated it end-to-end on the yield strength and Vickers hardness of 94 FCC HEAs: build a physics-anchored feature ladder, audit descriptor redundancy before trusting hand-built physics, prefer variance and heterogeneity descriptors over rule-of-mixtures means, validate with LOO and cluster-out LOBO together and headline the gap, audit every closed form for singularities on independent data, and accept a discovered term as mechanism only when independent engines converge on it.
+Physics-informed ML improves materials-property modeling only when physics constrains both the representation and the claim. In the fixed hierarchy of Fig.~1, Family~1 provides the grain-size baseline. Family~2 shows that the tested SSS and Wen/PCA descriptors are redundant or conditional on the campaign. Family~3 gives the clearest verified improvement for YS through a composition-dependent Hall--Petch intercept and a grain-width interaction. Family~4 shows no demonstrated advantage for non-linearity when the inputs are matched. Family~5 produces compact hypotheses, but their selection and transfer remain unresolved.
 
-The demonstrated payoff runs in both directions. Constructively, the protocol delivered the strongest models in every deployment regime: for YS a symbolic-regression equation with LOO $R^2 = 0.765$ and LOBO $R^2 = 0.668$, the Bayesian composition-Hall--Petch models M3 (deployable without imputation, external RMSE 133~\si{MPa}) and M15 (LOO $=$ LOBO $= 0.694$), and the discovery, confirmed independently by PySR, SISSO, and the Bayesian hierarchy, that grain-size heterogeneity enters through $\text{SD}_\text{grain}\cdot d^{-1/2}$. As auditor, the same machinery measured the four failure modes it guards against: solid-solution models overpredicting 2--28$\times$ and going redundant at partial $r < 0.10$; leave-one-out flattering a tree ensemble by 0.155 $R^2$ units relative to cluster-out truth; a best-BIC equation hiding a singularity that quintuples its external error; and every composition-based hardness model overfitting outright, with HV shown to be grain-geometry-dominated and externally unpredictable by any current model.
-
-The coefficients belong to this alloy system; the workflow does not. Extensions we consider warranted: applying the identical ladder and validation protocol to BCC HEAs, conventional multicomponent alloys, ceramics, and composites; replacing Vegard's-law misfits with first-principles volumes; microstructure-aware descriptors beyond the first two moments of the grain-size distribution; routine reporting of grain-size distributions (not just means) in experimental strength studies; and LOBO-validated transfer learning across processing routes and alloy families. Each new system re-runs the staircase rather than starting over; that is the contribution we intend to be reused.
-
-
-% BACK MATTER
+The key result is the gap between record-level and batch-level validation. M15 gives the strongest verified low-complexity YS performance when $\mathrm{SD}_{\mathrm{grain}}$ is measured, while M3 retains moderate performance without that feature. The tested non-linear estimator does not improve on its linear control at matched inputs. The symbolic HV form performs best across the sampled batches but remains conditional on post-selected structure and a hold-time term confounded with campaign. The practical implication is straightforward. Start with the known physics, test compact descriptors, then add measured composition, processing, and microstructure before increasing estimator complexity. Choose validation groups that match the intended decision. A model should not progress from interpolation to physical interpretation or alloy design without fold-contained selection, cluster-preserving score intervals, outcome-independent external data, and prospective mechanistic tests.
 
 \section*{CRediT authorship contribution statement}
-
-[TODO(submission): per-author CRediT roles.]
+Author-specific CRediT roles will be finalized before submission.
 
 \section*{Declaration of competing interest}
-
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
 \section*{Acknowledgments}
+This research was sponsored by the Army Research Laboratory under Cooperative Agreement Number W911NF-22-2-0106. The views and conclusions in this document are those of the authors and should not be interpreted as official policies of the Army Research Laboratory or the US Government. The US Government is authorized to reproduce and distribute reprints for Government Purposes, notwithstanding any copyright notation herein.
 
-The research was sponsored by the Army Research Laboratory and was accomplished under Cooperative Agreement Number W911NF-22-2-0106. The views and conclusions contained in this document are those of the authors. They should not be interpreted as representing the official policies, either expressed or implied, of the Army Research Laboratory or the US Government. The US Government is authorized to reproduce and distribute reprints for Government Purposes, notwithstanding any copyright notation herein. 
-
-We acknowledge Dr.\ Anup and his group at Texas A\&M University for the use of their XRD Bruker D8 Discover instrument, Texas A\&M's Materials Characterization Facility for the use of their EBSD-capable FIB-SEM, and Texas A\&M's High Performance Research Computing group for computational infrastructure.
+We acknowledge Texas A\&M University's Materials Characterization Facility and High Performance Research Computing group for experimental and computational infrastructure.
 
 \section*{Data and code availability}
-
-All analysis code, derived data, and figure-generation scripts are available in the companion repository [TODO(submission): https://github.com/mrinalinimulukutla/Hall-Petch-Modeling]. An archival snapshot is deposited on Zenodo: \url{https://doi.org/10.5281/zenodo.XXXXXXX} [TODO(submission): mint record]. The raw experimental dataset and the 82-point external-validation set are included in the repository.
-
-
-% REFERENCES
+The project repository contains the raw data, derived descriptors, analysis scripts, result tables, and figure-generation code. The \texttt{paper\_gpt/verified\_results} directory contains the dataset audit, corrected hardness coefficients, evidence-class audit, \texttt{main2\_grouped\_validation.csv}, \texttt{sdgrain\_m15\_validation.csv}, and \texttt{sdgrain\_feature\_audit.csv}. The scripts \texttt{paper\_gpt/main2\_validation.py} and \texttt{paper\_gpt/verify\_sdgrain\_models.py} generate the grouped table and grain-width audits. A versioned public repository identifier and a per-author CRediT statement still need to be added before submission. Nested ARMOTE-CV fold objects and true outer-loop PySR runs are absent, so those results are not treated as confirmatory.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{references}

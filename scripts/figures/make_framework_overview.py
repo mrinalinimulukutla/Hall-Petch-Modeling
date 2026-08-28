@@ -30,8 +30,8 @@ ax.text(0.2, 5.9, 'Each tier gains predictive capability and incurs a specific, 
 # ----- staircase steps -----
 steps = [
     ('Classical\nHall–Petch', 'universal backbone\n(grain size)', 'no added risk', GREEN),
-    ('+ Composition /\nprocessing', 'where signal lives\n(σ₀ vs k)', 'interpretability\nvs fit', AMBER),
     ('+ Physics\ndescriptors', 'SSS, Wen, PCA', 'descriptor redundancy\n(partial r < 0.10)', ACCENT),
+    ('+ Composition /\nprocessing', 'where signal lives\n(σ₀ vs k)', 'interpretability\nvs fit', AMBER),
     ('+ Non-linear ML\n(ARMOTE-CV)', 'captures\ninteractions', 'validation optimism\n(LOO flatters)', ACCENT),
     ('→ Symbolic\nregression', 'interpretable\nclosed-form laws', 'deployment singularity\n(ext 421→163)', ACCENT),
 ]

@@ -22,12 +22,6 @@ D.~B. Miracle and O.~N. Senkov.
 \newblock A critical review of high entropy alloys and related concepts.
 \newblock {\em Acta Materialia}, 122:448--511, 2017.
 
-\bibitem{Senkov2018}
-O.~N. Senkov, J.~D. Miller, D.~B. Miracle, and C.~Woodward.
-\newblock Accelerated exploration of multi-principal element alloys with solid
-  solution phases.
-\newblock {\em Nature Communications}, 6:6529, 2015.
-
 \bibitem{Rao2022}
 Ziyuan Rao, Po-Yen Tung, Ruiwen Xie, Ye~Wei, Hongbin Zhang, Alberto Ferrari,
   T.~P.~C. Klaver, Fritz K{\"o}rmann, Prithiv~Thoudden Sukumar, Alisson
@@ -35,6 +29,15 @@ Ziyuan Rao, Po-Yen Tung, Ruiwen Xie, Ye~Wei, Hongbin Zhang, Alberto Ferrari,
   Oliver Gutfleisch, Stefan Bauer, and Dierk Raabe.
 \newblock Machine learning-enabled high-entropy alloy discovery.
 \newblock {\em Science}, 378(6615):78--85, 2022.
+
+\bibitem{Hastings2025FCC}
+Trevor Hastings, Mrinalini Mulukutla, Danial Khatamsaz, Daniel Salas, Wenle Xu,
+  Daniel Lewis, Nicole Person, Matthew Skokan, Braden Miller, James Paramore,
+  Brady Butler, Douglas Allaire, Vahid Attari, Ibrahim Karaman, George Pharr,
+  Ankit Srivastava, and Raymundo Arr\'{o}yave.
+\newblock Accelerated multi-objective alloy discovery through efficient
+  {Bayesian} methods: Application to the {FCC} high entropy alloy space.
+\newblock {\em Acta Materialia}, 297:121173, 2025.
 
 \bibitem{Mulukutla2024BIRDSHOT}
 Mrinalini Mulukutla, A.~Nicole Person, Sven Voigt, Lindsey Kuettner, Branden
@@ -68,6 +71,19 @@ Bryce Meredig, Erin Antono, Carena Church, Maxwell Hutchinson, Julia Ling, Sean
   discovery.
 \newblock {\em Molecular Systems Design \& Engineering}, 3(5):819--825, 2018.
 
+\bibitem{WangAYT2020}
+Anthony Yu-Tung Wang, Ryan~J. Murdock, Steven~K. Kauwe, Anton~O. Oliynyk,
+  Aleksander Gurlo, Jakoah Brgoch, Kristin~A. Persson, and Taylor~D. Sparks.
+\newblock Machine learning for materials scientists: {A}n introductory guide
+  toward best practices.
+\newblock {\em Chemistry of Materials}, 32(12):4954--4965, 2020.
+
+\bibitem{LiMDHIT2024}
+Qin Li, Nihang Fu, Sadman~Sadeed Omee, and Jianjun Hu.
+\newblock {MD}-{HIT}: {M}achine learning for material property prediction with
+  dataset redundancy control.
+\newblock {\em npj Computational Materials}, 10, 2024.
+
 \bibitem{Hall1951}
 E.~O. Hall.
 \newblock The deformation and ageing of mild steel: {III}. {Discussion} of
@@ -99,30 +115,6 @@ S.~Yoshida, T.~Bhattacharjee, Y.~Bai, and N.~Tsuji.
   annealing.
 \newblock {\em Scripta Materialia}, 134:33--36, 2017.
 
-\bibitem{Dunstan2014}
-D.~J. Dunstan and A.~J. Bushby.
-\newblock Grain size dependence of the strength of metals: The {Hall--Petch}
-  effect does not scale as predicted.
-\newblock {\em International Journal of Plasticity}, 53:56--65, 2014.
-
-\bibitem{Baldwin1958}
-W.~M. Baldwin, Jr.
-\newblock Yield strength of metals as a function of grain size.
-\newblock {\em Acta Metallurgica}, 6(3):139--141, 1958.
-
-\bibitem{Li2016HP}
-Y.~Li, A.~J. Bushby, and D.~J. Dunstan.
-\newblock The {Hall--Petch} effect as a manifestation of the general size
-  effect.
-\newblock {\em Proceedings of the Royal Society A}, 472:20150890, 2016.
-
-\bibitem{Yoshida2019acta}
-Shuhei Yoshida, Takuto Ikeuchi, Tilak Bhattacharjee, Yu~Bai, Akinobu Shibata,
-  and Nobuhiro Tsuji.
-\newblock Effect of elemental combination on friction stress and {Hall}-{Petch}
-  relationship in face-centered cubic high/medium entropy alloys.
-\newblock {\em Acta Materialia}, 171:201--215, 2019.
-
 \bibitem{LiKHP2024}
 Jiaxiang Li, Kenta Yamanaka, Yongjie Zhang, Tadashi Furuhara, Guoqin Cao,
   Junhua Hu, and Akihiko Chiba.
@@ -150,22 +142,23 @@ I.~Toda-Caraballo and P.~E.~J. Rivera-D\'{i}az-del Castillo.
 \newblock Modelling solid solution hardening in high entropy alloys.
 \newblock {\em Acta Materialia}, 85:14--23, 2015.
 
-\bibitem{Yin2020}
-Binglun Yin, Shuhei Yoshida, Nobuhiro Tsuji, and William~A. Curtin.
-\newblock Yield strength and misfit volumes of {NiCoCr} and implications for
-  short-range-order.
-\newblock {\em Nature Communications}, 11:2507, 2020.
+\bibitem{Wen2021SSS}
+Cheng Wen, Changxin Wang, Yan Zhang, Stoichko Antonov, Dezhen Xue, Turab
+  Lookman, and Yanjing Su.
+\newblock Modeling solid solution strengthening in high entropy alloys using
+  machine learning.
+\newblock {\em Acta Materialia}, 212:116917, 2021.
 
-\bibitem{Moitzi2022}
-Franco Moitzi, Lorenz Romaner, Andrei~V. Ruban, and Oleg~E. Peil.
-\newblock Accurate ab initio modeling of solid solution strengthening in high
-  entropy alloys.
-\newblock {\em Physical Review Materials}, 6:103602, 2022.
+\bibitem{Tabor1951}
+D.~Tabor.
+\newblock {\em The Hardness of Metals}.
+\newblock Clarendon Press, Oxford, 1951.
 
-\bibitem{Zhang2008}
-Y.~Zhang, Y.~J. Zhou, J.~P. Lin, G.~L. Chen, and P.~K. Liaw.
-\newblock Solid-solution phase formation rules for multi-component alloys.
-\newblock {\em Advanced Engineering Materials}, 10(6):534--538, 2008.
+\bibitem{Dao2001}
+M.~Dao, N.~Chollacoop, K.~J. Van~Vliet, T.~A. Venkatesh, and S.~Suresh.
+\newblock Computational modeling of the forward and reverse problems in
+  instrumented sharp indentation.
+\newblock {\em Acta Materialia}, 49(19):3899--3918, 2001.
 
 \bibitem{Yang2012}
 X.~Yang and Y.~Zhang.
@@ -179,81 +172,6 @@ Sheng Guo, Chun Ng, Jian Lu, and C.~T. Liu.
   phase in high entropy alloys.
 \newblock {\em Journal of Applied Physics}, 109(10):103505, 2011.
 
-\bibitem{Troparevsky2015}
-M.~Claudia Troparevsky, James~R. Morris, Paul R.~C. Kent, Andrew~R. Lupini, and
-  G.~Malcolm Stocks.
-\newblock Criteria for predicting the formation of single-phase high-entropy
-  alloys.
-\newblock {\em Physical Review X}, 5:011041, 2015.
-
-\bibitem{Ye2015geometric}
-Y.~F. Ye, C.~T. Liu, and Y.~Yang.
-\newblock A geometric model for intrinsic residual strain and phase stability
-  in high entropy alloys.
-\newblock {\em Acta Materialia}, 94:152--161, 2015.
-
-\bibitem{Ye2015phi}
-Y.~F. Ye, Q.~Wang, J.~Lu, C.~T. Liu, and Y.~Yang.
-\newblock Design of high entropy alloys: A single-parameter thermodynamic rule.
-\newblock {\em Scripta Materialia}, 104:53--55, 2015.
-
-\bibitem{Wen2021SSS}
-Cheng Wen, Changxin Wang, Yan Zhang, Stoichko Antonov, Dezhen Xue, Turab
-  Lookman, and Yanjing Su.
-\newblock Modeling solid solution strengthening in high entropy alloys using
-  machine learning.
-\newblock {\em Acta Materialia}, 212:116917, 2021.
-
-\bibitem{Huang2019}
-W.~Huang, P.~Martin, and H.~L. Zhuang.
-\newblock Machine-learning phase prediction of high-entropy alloys.
-\newblock {\em Acta Materialia}, 169:225--236, 2019.
-
-\bibitem{Islam2022}
-Nusrat Islam, Wenjiang Huang, and Houlong~L. Zhuang.
-\newblock Machine learning for phase selection in multi-principal element
-  alloys.
-\newblock {\em Computational Materials Science}, 150:230--235, 2018.
-
-\bibitem{Wen2019}
-C.~Wen, Y.~Zhang, C.~Wang, D.~Xue, Y.~Bai, S.~Antonov, L.~Dai, T.~Lookman, and
-  Y.~Su.
-\newblock Machine learning assisted design of high entropy alloys with desired
-  property.
-\newblock {\em Acta Materialia}, 170:109--117, 2019.
-
-\bibitem{Rickman2019}
-J.~M. Rickman, H.~M. Chan, M.~P. Harmer, J.~A. Smeltzer, C.~J. Marvel, A.~Roy,
-  and G.~Balasubramanian.
-\newblock Materials informatics for the screening of multi-principal elements
-  and high-entropy alloys.
-\newblock {\em Nature Communications}, 10:2618, 2019.
-
-\bibitem{Khatamsaz2023}
-Danial Khatamsaz, Brent Vela, Prashant Singh, Duane~D. Johnson, Douglas
-  Allaire, and Raymundo Arr\'{o}yave.
-\newblock {Bayesian} optimization with active learning of design constraints
-  using an entropy-based approach.
-\newblock {\em npj Computational Materials}, 9(1):49, 2023.
-
-\bibitem{LiuPei2023}
-Xianglin Liu, Jiaxin Zhang, and Zongrui Pei.
-\newblock Machine learning for high-entropy alloys: {P}rogress, challenges and
-  opportunities.
-\newblock {\em Progress in Materials Science}, 131:101018, 2023.
-
-\bibitem{Hart2021}
-G.~L.~W. Hart, T.~Mueller, C.~Tober, and S.~Curtarolo.
-\newblock Machine learning for alloys.
-\newblock {\em Nature Reviews Materials}, 6:730--755, 2021.
-
-\bibitem{WangAYT2020}
-Anthony Yu-Tung Wang, Ryan~J. Murdock, Steven~K. Kauwe, Anton~O. Oliynyk,
-  Aleksander Gurlo, Jakoah Brgoch, Kristin~A. Persson, and Taylor~D. Sparks.
-\newblock Machine learning for materials scientists: {A}n introductory guide
-  toward best practices.
-\newblock {\em Chemistry of Materials}, 32(12):4954--4965, 2020.
-
 \bibitem{Akaike1974}
 H.~Akaike.
 \newblock A new look at the statistical model identification.
@@ -263,18 +181,6 @@ H.~Akaike.
 G.~Schwarz.
 \newblock Estimating the dimension of a model.
 \newblock {\em The Annals of Statistics}, 6(2):461--464, 1978.
-
-\bibitem{BurnhamAnderson2002}
-K.~P. Burnham and D.~R. Anderson.
-\newblock {\em Model Selection and Multimodel Inference: A Practical
-  Information-Theoretic Approach}.
-\newblock Springer, 2nd edition, 2002.
-
-\bibitem{KassRaftery1995}
-Robert~E. Kass and Adrian~E. Raftery.
-\newblock Bayes factors.
-\newblock {\em Journal of the American Statistical Association},
-  90(430):773--795, 1995.
 
 \bibitem{Vehtari2017}
 Aki Vehtari, Andrew Gelman, and Jonah Gabry.
@@ -287,18 +193,6 @@ Yuling Yao, Aki Vehtari, Daniel Simpson, and Andrew Gelman.
 \newblock Using stacking to average {Bayesian} predictive distributions (with
   discussion).
 \newblock {\em Bayesian Analysis}, 13(3):917--1007, 2018.
-
-\bibitem{Chen2016XGBoost}
-T.~Chen and C.~Guestrin.
-\newblock {XGBoost}: A scalable tree boosting system.
-\newblock In {\em Proceedings of the 22nd ACM SIGKDD International Conference
-  on Knowledge Discovery and Data Mining}, pages 785--794, 2016.
-
-\bibitem{Akiba2019Optuna}
-T.~Akiba, S.~Sano, T.~Yanase, T.~Ohta, and M.~Koyama.
-\newblock Optuna: A next-generation hyperparameter optimization framework.
-\newblock In {\em Proceedings of the 25th ACM SIGKDD International Conference
-  on Knowledge Discovery and Data Mining}, pages 2623--2631, 2019.
 
 \bibitem{Cranmer2023PySR}
 M.~Cranmer.
@@ -313,19 +207,6 @@ Runhai Ouyang, Stefano Curtarolo, Emre Ahmetcik, Matthias Scheffler, and
   low-dimensional descriptor in an immensity of offered candidates.
 \newblock {\em Physical Review Materials}, 2(8):083802, 2018.
 
-\bibitem{Oliynyk2016}
-Anton~O. Oliynyk, Erin Antono, Taylor~D. Sparks, Leila Ghadbeigi, Michael~W.
-  Gaultois, Bryce Meredig, and Arthur Mar.
-\newblock High-throughput machine-learning-driven synthesis of full-{Heusler}
-  compounds.
-\newblock {\em Chemistry of Materials}, 28(20):7324--7331, 2016.
-
-\bibitem{Stone1974}
-M.~Stone.
-\newblock Cross-validatory choice and assessment of statistical predictions.
-\newblock {\em Journal of the Royal Statistical Society: Series B},
-  36(2):111--133, 1974.
-
 \bibitem{Borg2020}
 Christopher K.~H. Borg, Carolina Frey, Jasper Moh, Tresa~M. Pollock, and
   St{\'e}phane Gorsse.
@@ -333,12 +214,11 @@ Christopher K.~H. Borg, Carolina Frey, Jasper Moh, Tresa~M. Pollock, and
   multi-principal element alloys.
 \newblock {\em Scientific Data}, 7:430, 2020.
 
-\bibitem{Schneider2021}
-M.~Schneider, E.~P. George, T.~J. Manescau, T.~Z{\'a}le{\v{z}}{\'a}k, and
-  J.~Hunfeld.
-\newblock Analysis of strengthening due to grain boundaries and annealing twin
-  boundaries in the {CrCoNi} medium-entropy alloy.
-\newblock {\em International Journal of Plasticity}, 124:155--169, 2020.
+\bibitem{SchneiderCrFeNi2021}
+Mike Schneider and Guillaume Laplanche.
+\newblock Data compilation regarding the effects of grain size and temperature
+  on the strength of the single-phase {FCC} {CrFeNi} medium-entropy alloy.
+\newblock {\em Data in Brief}, 34:106712, 2021.
 
 \bibitem{HuangTY2019}
 Yung-Chien Huang, Che-Hsuan Su, Shyi-Kaan Wu, and Chieh Lin.
@@ -346,88 +226,11 @@ Yung-Chien Huang, Che-Hsuan Su, Shyi-Kaan Wu, and Chieh Lin.
   in {FCC}-structured high/medium entropy alloys.
 \newblock {\em Entropy}, 21(3):297, 2019.
 
-\bibitem{Tabor1951}
-D.~Tabor.
-\newblock {\em The Hardness of Metals}.
-\newblock Clarendon Press, Oxford, 1951.
-
-\bibitem{Dao2001}
-M.~Dao, N.~Chollacoop, K.~J. Van~Vliet, T.~A. Venkatesh, and S.~Suresh.
-\newblock Computational modeling of the forward and reverse problems in
-  instrumented sharp indentation.
-\newblock {\em Acta Materialia}, 49(19):3899--3918, 2001.
-
-\bibitem{Gu2024}
-Yejun Gu, Christopher~D. Stiles, and Jaafar~A. El-Awady.
-\newblock A statistical perspective for predicting the strength of metals:
-  {R}evisiting the {Hall}--{Petch} relationship using machine learning.
-\newblock {\em Acta Materialia}, 266:119631, 2024.
-
-\bibitem{Kurzydlowski1990}
-K.~J. Kurzyd{\l}owski.
-\newblock A model for the flow stress dependence on the distribution of grain
-  size in polycrystals.
-\newblock {\em Scripta Metallurgica et Materialia}, 24(5):879--883, 1990.
-
-\bibitem{Berbenni2007}
-S.~Berbenni, V.~Favier, and M.~Berveiller.
-\newblock Impact of the grain size distribution on the yield stress of
-  heterogeneous materials.
-\newblock {\em International Journal of Plasticity}, 23(1):114--142, 2007.
-
-\bibitem{Lehto2014}
-Pauli Lehto, Heikki Remes, Tapio Saukkonen, Hannu H{\"a}nninen, and Jani
-  Romanoff.
-\newblock Influence of grain size distribution on the {Hall}--{Petch}
-  relationship of welded structural steel.
-\newblock {\em Materials Science and Engineering: A}, 592:28--39, 2014.
-
-\bibitem{Wang2002}
-Yinmin Wang, Mingwei Chen, Fenghua Zhou, and En~Ma.
-\newblock High tensile ductility in a nanostructured metal.
-\newblock {\em Nature}, 419(6910):912--915, 2002.
-
-\bibitem{ZhuWu2019}
-Yuntian Zhu and Xiaolei Wu.
-\newblock Perspective on hetero-deformation induced ({HDI}) hardening and back
-  stress.
-\newblock {\em Materials Research Letters}, 7(10):393--398, 2019.
-
-\bibitem{Tian2021}
-Yanzhong Tian, Linlin Li, Jingjing Li, Yang Yang, Song Li, and Gaowu Qin.
-\newblock Correlating strength and hardness of high-entropy alloys.
-\newblock {\em Advanced Engineering Materials}, 23(8), 2021.
-
-\bibitem{Fan2021}
-Xiaojuan Fan, Ruitao Qu, and Zhefeng Zhang.
-\newblock Relation between strength and hardness of high-entropy alloys.
-\newblock {\em Acta Metallurgica Sinica (English Letters)}, 34(11):1461--1482,
-  2021.
-
-\bibitem{Bracq2019}
-G.~Bracq, M.~Laurent-Brocq, C.~Varvenne, L.~Perri{\`e}re, W.~A. Curtin, J.-M.
-  Joubert, and I.~Guillot.
-\newblock Combining experiments and modeling to explore the solid solution
-  strengthening of high and medium entropy alloys.
-\newblock {\em Acta Materialia}, 177:266--279, 2019.
-
-\bibitem{LiMDHIT2024}
-Qin Li, Nihang Fu, Sadman~Sadeed Omee, and Jianjun Hu.
-\newblock {MD}-{HIT}: {M}achine learning for material property prediction with
-  dataset redundancy control.
-\newblock {\em npj Computational Materials}, 10, 2024.
-
-\bibitem{He2014}
-J.~Y. He, W.~H. Liu, H.~Wang, Y.~Wu, X.~J. Liu, T.~G. Nieh, and Z.~P. Lu.
-\newblock Effects of {Al} addition on structural evolution and tensile
-  properties of the {FeCoNiCrMn} high-entropy alloy system.
-\newblock {\em Acta Materialia}, 62:105--113, 2014.
-
-\bibitem{Muckley2023}
-Eric~S. Muckley, James~E. Saal, Bryce Meredig, Christopher~S. Roper, and
-  John~H. Martin.
-\newblock Interpretable models for extrapolation in scientific machine
-  learning.
-\newblock {\em Digital Discovery}, 2(5):1425--1435, 2023.
+\bibitem{Yoshida2019acta}
+Shuhei Yoshida, Takuto Ikeuchi, Tilak Bhattacharjee, Yu~Bai, Akinobu Shibata,
+  and Nobuhiro Tsuji.
+\newblock Effect of elemental combination on friction stress and {Hall}-{Petch}
+  relationship in face-centered cubic high/medium entropy alloys.
+\newblock {\em Acta Materialia}, 171:201--215, 2019.
 
 \end{thebibliography}

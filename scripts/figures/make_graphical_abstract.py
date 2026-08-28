@@ -52,7 +52,7 @@ def label(ax, txt, fg):
 
 # 1 ---- Physics: SSS theories overpredict (parity, points above y = x) ------
 ax, fg = axes[0], PANELS[0]['fg']
-label(ax, 'SSS theories overpredict\nby 2–28×', fg)
+label(ax, 'SSS theories overpredict\nby 2–5×', fg)
 ax.plot([0.14, 0.82], [0.10, 0.52], color='#777', lw=2.2, ls='--')
 rng = np.random.default_rng(5)
 xs = np.linspace(0.20, 0.70, 6)

@@ -2429,7 +2429,7 @@ notebook = {
     "cells": cells
 }
 
-output_path = f'{NOTEBOOK_DIR}/Hall_Petch_HEA_Analysis.ipynb'
+output_path = f'{NOTEBOOK_DIR}/Hall_Petch_MPEA_Analysis.ipynb'
 with open(output_path, 'w') as f:
     json.dump(notebook, f, indent=1, ensure_ascii=False)
 

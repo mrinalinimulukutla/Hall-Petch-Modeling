@@ -4,10 +4,11 @@ Every script under scripts/ imports REPO_ROOT, DATA_DIR, RESULTS_DIR, etc.
 from this module, so the entire repo can be moved or cloned without editing
 any individual script.
 
-Scripts are organized hierarchically by analysis tier (the "staircase" of
-the paper: grain size -> SSS descriptors -> composition -> non-linear ML ->
-symbolic regression, plus the validation floor and the hardness/Tabor
-synthesis). Importing this module also appends every scripts/ subdirectory
+Scripts are organized by the five model families of the manuscript:
+Family 1 classical Hall-Petch -> Family 2 physics descriptors ->
+Family 3 composition/processing -> Family 4 non-linear ML ->
+Family 5 symbolic regression, plus the validation protocol and the
+hardness/Tabor synthesis. Importing this module also appends every scripts/ subdirectory
 to sys.path, so cross-script imports (e.g. ``from external_validation
 import ...``) keep working regardless of which tier folder a script lives in.
 
@@ -36,20 +37,20 @@ DOCS_DIR       = REPO_ROOT / 'docs'
 
 SCRIPTS_DIR    = REPO_ROOT / 'scripts'
 
-# Tier folders, in pipeline order.
+# Family folders, in pipeline order.
 SCRIPT_SUBDIRS = [
     '00_data_preparation',
-    '01_tier1_grain_size',
-    '02_tier2_sss_descriptors',
-    '03_tier3_composition_hp',
-    '04_tier4_nonlinear_ml',
-    '05_tier5_symbolic_regression',
-    '06_validation_floor',
+    '01_family1_grain_size',
+    '02_family2_physics_descriptors',
+    '03_family3_composition_processing',
+    '04_family4_nonlinear_ml',
+    '05_family5_symbolic_regression',
+    '06_validation',
     '07_hardness_tabor',
     'figures',
 ]
 
-# Make every tier folder importable so scripts can import each other
+# Make every family folder importable so scripts can import each other
 # (e.g. sisso_robust.py imports descriptor tables from external_validation.py).
 for _sub in SCRIPT_SUBDIRS:
     _p = SCRIPTS_DIR / _sub

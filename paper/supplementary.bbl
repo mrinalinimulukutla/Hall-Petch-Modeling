@@ -1,5 +1,14 @@
 \begin{thebibliography}{10}
 
+\bibitem{Hastings2025FCC}
+Trevor Hastings, Mrinalini Mulukutla, Danial Khatamsaz, Daniel Salas, Wenle Xu,
+  Daniel Lewis, Nicole Person, Matthew Skokan, Braden Miller, James Paramore,
+  Brady Butler, Douglas Allaire, Vahid Attari, Ibrahim Karaman, George Pharr,
+  Ankit Srivastava, and Raymundo Arr\'{o}yave.
+\newblock Accelerated multi-objective alloy discovery through efficient
+  {Bayesian} methods: Application to the {FCC} high entropy alloy space.
+\newblock {\em Acta Materialia}, 297:121173, 2025.
+
 \bibitem{Mulukutla2024BIRDSHOT}
 Mrinalini Mulukutla, A.~Nicole Person, Sven Voigt, Lindsey Kuettner, Branden
   Kappes, Danial Khatamsaz, Robert Robinson, Daniel Salas~Mula, Wenle Xu,
@@ -12,15 +21,6 @@ Mrinalini Mulukutla, A.~Nicole Person, Sven Voigt, Lindsey Kuettner, Branden
   discovery.
 \newblock {\em Integrating Materials and Manufacturing Innovation},
   13:453--473, 2024.
-
-\bibitem{Hastings2025FCC}
-Trevor Hastings, Mrinalini Mulukutla, Danial Khatamsaz, Daniel Salas, Wenle Xu,
-  Daniel Lewis, Nicole Person, Matthew Skokan, Braden Miller, James Paramore,
-  Brady Butler, Douglas Allaire, Vahid Attari, Ibrahim Karaman, George Pharr,
-  Ankit Srivastava, and Raymundo Arr\'{o}yave.
-\newblock Accelerated multi-objective alloy discovery through efficient
-  {Bayesian} methods: Application to the {FCC} high entropy alloy space.
-\newblock {\em Acta Materialia}, 297:121173, 2025.
 
 \bibitem{Mulukutla2026BRAVE}
 Mrinalini Mulukutla, Danial Khatamsaz, Trevor Hastings, Wenle Xu, Daniel Salas,
@@ -41,11 +41,6 @@ C\'{e}line Varvenne, Aitor Luque, and William~A. Curtin.
 C.~Varvenne and W.~A. Curtin.
 \newblock Predicting yield strengths of noble metal high entropy alloys.
 \newblock {\em Scripta Materialia}, 142:92--95, 2017.
-
-\bibitem{Dieter1986}
-G.~E. Dieter.
-\newblock {\em Mechanical Metallurgy}.
-\newblock McGraw-Hill, 3rd edition, 1986.
 
 \bibitem{Labusch1970}
 R.~Labusch.
@@ -70,25 +65,30 @@ S.~Yoshida, T.~Bhattacharjee, Y.~Bai, and N.~Tsuji.
   annealing.
 \newblock {\em Scripta Materialia}, 134:33--36, 2017.
 
+\bibitem{Wu2014}
+Z.~Wu, H.~Bei, G.~M. Pharr, and E.~P. George.
+\newblock Temperature dependence of the mechanical properties of equiatomic
+  solid solution alloys with face-centered cubic crystal structures.
+\newblock {\em Acta Materialia}, 81:428--441, 2014.
+
 \bibitem{Moitzi2022}
 Franco Moitzi, Lorenz Romaner, Andrei~V. Ruban, and Oleg~E. Peil.
 \newblock Accurate ab initio modeling of solid solution strengthening in high
   entropy alloys.
 \newblock {\em Physical Review Materials}, 6:103602, 2022.
 
-\bibitem{Bracq2019}
-G.~Bracq, M.~Laurent-Brocq, C.~Varvenne, L.~Perri{\`e}re, W.~A. Curtin, J.-M.
-  Joubert, and I.~Guillot.
-\newblock Combining experiments and modeling to explore the solid solution
-  strengthening of high and medium entropy alloys.
-\newblock {\em Acta Materialia}, 177:266--279, 2019.
+\bibitem{Cordero2016}
+Z.~C. Cordero, B.~E. Knight, and C.~A. Schuh.
+\newblock Six decades of the {Hall--Petch} effect -- a survey of grain-size
+  strengthening studies on pure metals.
+\newblock {\em International Materials Reviews}, 61(8):495--512, 2016.
 
-\bibitem{Khatamsaz2023}
-Danial Khatamsaz, Brent Vela, Prashant Singh, Duane~D. Johnson, Douglas
-  Allaire, and Raymundo Arr\'{o}yave.
-\newblock {Bayesian} optimization with active learning of design constraints
-  using an entropy-based approach.
-\newblock {\em npj Computational Materials}, 9(1):49, 2023.
+\bibitem{Yoshida2019acta}
+Shuhei Yoshida, Takuto Ikeuchi, Tilak Bhattacharjee, Yu~Bai, Akinobu Shibata,
+  and Nobuhiro Tsuji.
+\newblock Effect of elemental combination on friction stress and {Hall}-{Petch}
+  relationship in face-centered cubic high/medium entropy alloys.
+\newblock {\em Acta Materialia}, 171:201--215, 2019.
 
 \bibitem{Oliynyk2016}
 Anton~O. Oliynyk, Erin Antono, Taylor~D. Sparks, Leila Ghadbeigi, Michael~W.
@@ -97,17 +97,41 @@ Anton~O. Oliynyk, Erin Antono, Taylor~D. Sparks, Leila Ghadbeigi, Michael~W.
   compounds.
 \newblock {\em Chemistry of Materials}, 28(20):7324--7331, 2016.
 
+\bibitem{Ouyang2018SISSO}
+Runhai Ouyang, Stefano Curtarolo, Emre Ahmetcik, Matthias Scheffler, and
+  Luca~M. Ghiringhelli.
+\newblock {SISSO}: A compressed-sensing method for identifying the best
+  low-dimensional descriptor in an immensity of offered candidates.
+\newblock {\em Physical Review Materials}, 2(8):083802, 2018.
+
 \bibitem{Odrzywolek2025}
 Andrzej Odrzywo{\l}ek.
-\newblock Elementary function as a single binary operation.
-\newblock {\em arXiv preprint}, 2025.
-\newblock arXiv:2503.21852.
+\newblock All elementary functions from a single binary operator, 2026.
 
 \bibitem{Jiang2022HP}
 Lei Jiang, Huadong Fu, Hongtao Zhang, and Jianxin Xie.
 \newblock Physical mechanism interpretation of polycrystalline metals' yield
   strength via a data-driven method: A novel {Hall--Petch} relationship.
 \newblock {\em Acta Materialia}, 231:117868, 2022.
+
+\bibitem{Borg2020}
+Christopher K.~H. Borg, Carolina Frey, Jasper Moh, Tresa~M. Pollock, and
+  St{\'e}phane Gorsse.
+\newblock Expanded dataset of mechanical properties and observed phases of
+  multi-principal element alloys.
+\newblock {\em Scientific Data}, 7:430, 2020.
+
+\bibitem{SchneiderCrFeNi2021}
+Mike Schneider and Guillaume Laplanche.
+\newblock Data compilation regarding the effects of grain size and temperature
+  on the strength of the single-phase {FCC} {CrFeNi} medium-entropy alloy.
+\newblock {\em Data in Brief}, 34:106712, 2021.
+
+\bibitem{HuangTY2019}
+Yung-Chien Huang, Che-Hsuan Su, Shyi-Kaan Wu, and Chieh Lin.
+\newblock A study on the {Hall--Petch} relationship and grain growth kinetics
+  in {FCC}-structured high/medium entropy alloys.
+\newblock {\em Entropy}, 21(3):297, 2019.
 
 \bibitem{Tabor1951}
 D.~Tabor.
@@ -119,23 +143,5 @@ M.~Dao, N.~Chollacoop, K.~J. Van~Vliet, T.~A. Venkatesh, and S.~Suresh.
 \newblock Computational modeling of the forward and reverse problems in
   instrumented sharp indentation.
 \newblock {\em Acta Materialia}, 49(19):3899--3918, 2001.
-
-\bibitem{Johnson1970}
-K.~L. Johnson.
-\newblock The correlation of indentation experiments.
-\newblock {\em Journal of the Mechanics and Physics of Solids}, 18(2):115--126,
-  1970.
-
-\bibitem{Wu2014}
-Z.~Wu, H.~Bei, G.~M. Pharr, and E.~P. George.
-\newblock Temperature dependence of the mechanical properties of equiatomic
-  solid solution alloys with face-centered cubic crystal structures.
-\newblock {\em Acta Materialia}, 81:428--441, 2014.
-
-\bibitem{Cordero2016}
-Z.~C. Cordero, B.~E. Knight, and C.~A. Schuh.
-\newblock Six decades of the {Hall--Petch} effect -- a survey of grain-size
-  strengthening studies on pure metals.
-\newblock {\em International Materials Reviews}, 61(8):495--512, 2016.
 
 \end{thebibliography}

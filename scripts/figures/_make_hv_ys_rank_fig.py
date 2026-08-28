@@ -10,13 +10,13 @@ from scipy import stats
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from _config import REPO_ROOT, DATA_DIR, RAW_DATA_DIR, RESULTS_DIR, PLOTS_DIR, PAPER_DIR, PAPER_FIG_DIR
+import _figstyle as S
+S.apply()
 BASE = str(REPO_ROOT)
 OUT  = f'{PAPER_FIG_DIR}/fig_hv_ys_rank.png'
 
-BATCH_COLORS = {
-    'BBA': '#D55E00', 'BBB': '#E69F00', 'BBC': '#27AE60',
-    'CBA': '#0072B2', 'CBB': '#8E44AD', 'CBC': '#16A085',
-}
+BATCH_COLORS = {b: c for b, (c, _) in S.BATCH.items()}
+MARKERS = {b: m for b, (_, m) in S.BATCH.items()}
 
 df = pd.read_csv(f'{DATA_DIR}/data_with_descriptors.csv')
 df = df.dropna(subset=['HV', 'YS']).copy()
@@ -44,12 +44,8 @@ print(f"n = {n}; global rho = {rho_g:.3f}")
 for b, (r, k) in batch_rhos.items():
     print(f"  {b}: rho = {r:+.3f} (n={k})")
 
-plt.rcParams.update({
-    'font.size': 13, 'axes.labelsize': 14, 'axes.titlesize': 14,
-    'xtick.labelsize': 12, 'ytick.labelsize': 12, 'legend.fontsize': 10,
-})
 
-fig, ax = plt.subplots(figsize=(5.0, 5.0))
+fig, ax = plt.subplots(figsize=(S.W_COL, 3.2))
 lims = [0, n + 1]
 ax.plot(lims, lims, 'k--', linewidth=1.2, alpha=0.55, zorder=1, label='perfect agreement')
 
@@ -70,15 +66,13 @@ ax.set_xlabel('YS rank (1 = strongest)')
 ax.set_ylabel('HV rank (1 = hardest)')
 ax.set_aspect('equal')
 ax.grid(True, alpha=0.3)
-ax.legend(loc='lower right', fontsize=9, framealpha=0.92, ncol=1)
+ax.legend(loc='lower right', framealpha=0.92, ncol=1)
 ax.text(0.04, 0.96,
         (f'Global $\\rho = {rho_g:.2f}$\n'
          f'B-campaign $\\rho = {rho_B:.2f}$\n'
          f'C-campaign $\\rho = {rho_C:.2f}$\n'
          f'Within-batch $\\rho = 0.70\\text{{--}}0.95$'),
-        transform=ax.transAxes, fontsize=10, va='top',
+        transform=ax.transAxes, va='top',
         bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.92, edgecolor='black', linewidth=0.6))
-
-plt.tight_layout()
 plt.savefig(OUT, dpi=200, bbox_inches='tight')
 print(f"Saved {OUT}")

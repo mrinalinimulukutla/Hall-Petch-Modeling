@@ -1,161 +1,133 @@
-# Physics_informed_ML_Hall_Petch — staged reproduction
-# Run `make help` for the annotated target list. Stage order matches
-# docs/reproducing.md and the paper's staircase.
+# Physics_informed_ML_Hall_Petch_2 — staged reproduction
+# `make help` lists every target. Stage order matches docs/reproducing.md.
 
-PY      := python
-S       := scripts
-LATEX   := cd paper && pdflatex -interaction=nonstopmode
+PY    := python
+S     := scripts
+LATEX := cd paper && pdflatex -interaction=nonstopmode
 
-.PHONY: help install test clean paper notebook report all \
-        data diagnostics scaling bayesian sss pca-ols comp-hp export-models \
-        ml fair armote-ladder sisso pysr eml symbolic hardness-sr \
-        external audit bootstrap-sr per-batch-lobo mc-grain vif ceiling \
-        unified cv-comparison hardness figures
+.PHONY: help install test clean all verify \
+        data diagnostics family1 bayesian family2 pca family3 sdgrain export-models \
+        family4 fair family5 sisso pysr validation external audit grouped \
+        hardness figures paper notebook report
 
-help:  ## Show this help message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+help:  ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+	  awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 install:  ## pip install -r requirements.txt
 	pip install -r requirements.txt
 
-test:  ## Run regression test suite (~30 s)
+test:  ## Regression tests locking the manuscript's canonical values (~1 s)
 	pytest tests/ -q
 
-clean:  ## Remove LaTeX aux files, pytest cache, __pycache__
+clean:  ## Remove LaTeX aux files and Python caches
 	rm -f paper/*.aux paper/*.bbl paper/*.blg paper/*.log paper/*.out paper/*.spl paper/*.toc
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	rm -rf .pytest_cache
 
-# ---------------- documents ----------------
-
-paper:  ## Build paper/main.pdf + supplementary.pdf (pdflatex x3 + bibtex)
-	$(LATEX) main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
-	$(LATEX) supplementary.tex && bibtex supplementary && pdflatex -interaction=nonstopmode supplementary.tex && pdflatex -interaction=nonstopmode supplementary.tex
-	$(MAKE) clean
-
-notebook:  ## Regenerate the .ipynb from its generator
-	$(PY) notebook/_generate_notebook.py
-
-report:  ## Regenerate the Word report (~1 min)
-	$(PY) report/generate_report.py
-
-all: notebook paper report  ## Build paper + notebook + report from current results/
-
 # ---------------- stage 0: data ----------------
 
-data:  ## Stage 0: descriptors + VLC + shared feature ladder (inputs.csv)
+data:  ## Descriptors, VLC quantities, and the shared feature ladder
 	$(PY) $(S)/00_data_preparation/eda_analysis.py
 	$(PY) $(S)/00_data_preparation/vlc_corrected.py
 	$(PY) $(S)/00_data_preparation/build_armote_inputs.py
 
-diagnostics:  ## Stage 0b: pre-modeling diagnostics + within-replicate kHP
+diagnostics:  ## Pre-modelling diagnostics and within-replicate slopes
 	$(PY) $(S)/00_data_preparation/eda_diagnostics.py
-	$(PY) $(S)/01_tier1_grain_size/eda_within_replicate_kHP.py
+	$(PY) $(S)/01_family1_grain_size/eda_within_replicate_kHP.py
 
-# ---------------- tier 1: grain size ----------------
+# ---------------- family 1: classical Hall-Petch ----------------
 
-scaling:  ## Tier 1: Hall-Petch + nine scaling laws (~5 min)
-	$(PY) $(S)/01_tier1_grain_size/grain_size_scaling_analysis.py
+family1:  ## Nine grain-size scaling laws, YS and HV
+	$(PY) $(S)/01_family1_grain_size/grain_size_scaling_analysis.py
 
-bayesian:  ## Tier 1b: Bayesian PSIS-LOO scaling comparison (~10 min, PyMC)
-	$(PY) $(S)/01_tier1_grain_size/bayesian_scaling_analysis.py
+bayesian:  ## Bayesian PSIS-LOO comparison of the scaling laws (needs PyMC)
+	$(PY) $(S)/01_family1_grain_size/bayesian_scaling_analysis.py
 
-literature-khp:  ## Tier 1c: literature k_HP comparison table
-	$(PY) $(S)/01_tier1_grain_size/literature_kHP_table.py
+# ---------------- family 2: physics descriptors ----------------
 
-# ---------------- tier 2: SSS descriptors ----------------
+family2:  ## VLC / Labusch / Toda-Caraballo benchmark and redundancy audit
+	$(PY) $(S)/02_family2_physics_descriptors/vlc_sss_analysis.py
 
-sss:  ## Tier 2: VLC + Cantor-anchored Labusch/TC audit
-	$(PY) $(S)/02_tier2_sss_descriptors/vlc_sss_analysis.py
+pca:  ## Fold-contained PCA-OLS on the curated descriptor set
+	$(PY) $(S)/02_family2_physics_descriptors/pca_ols_analysis.py
 
-pca-ols:  ## Tier 2b: PCA-OLS on curated Wen + SD_grain
-	$(PY) $(S)/02_tier2_sss_descriptors/pca_ols_analysis.py
+# ---------------- family 3: composition / processing ----------------
 
-# ---------------- tier 3: composition HP ----------------
+family3:  ## M-model hierarchy
+	$(PY) $(S)/03_family3_composition_processing/composition_hp_analysis.py
+	$(PY) $(S)/03_family3_composition_processing/kHP_composition_analysis.py
 
-comp-hp:  ## Tier 3: M-model hierarchy (M13/M15 table is cached: results/sdgrain_model_comparison.csv)
-	$(PY) $(S)/03_tier3_composition_hp/composition_hp_analysis.py
-	$(PY) $(S)/03_tier3_composition_hp/kHP_composition_analysis.py
+sdgrain:  ## M3 vs additive SD_grain vs the M15 interaction (headline YS result)
+	$(PY) $(S)/03_family3_composition_processing/sdgrain_models.py
 
-export-models:  ## Tier 3b: refresh fitted-model pickles + coefficient CSVs
-	$(PY) $(S)/03_tier3_composition_hp/export_fitted_models.py
+export-models:  ## Fitted-model pickles and coefficient tables
+	$(PY) $(S)/03_family3_composition_processing/export_fitted_models.py
 
-# ---------------- tier 4: non-linear ML ----------------
+# ---------------- family 4: non-linear ML ----------------
 
-ml:  ## Tier 4: 17-model panel + XGBoost/SHAP (~30 min, Optuna)
-	$(PY) $(S)/04_tier4_nonlinear_ml/exhaustive_model_search.py
-	$(PY) $(S)/04_tier4_nonlinear_ml/xgboost_shap_analysis.py
+family4:  ## Tuned panel and SHAP (slow)
+	$(PY) $(S)/04_family4_nonlinear_ml/exhaustive_model_search.py
+	$(PY) $(S)/04_family4_nonlinear_ml/xgboost_shap_analysis.py
 
-fair:  ## Tier 4b: equal-footing fair comparison (zero tuning)
-	$(PY) $(S)/04_tier4_nonlinear_ml/fair_comparison.py
+fair:  ## Matched-input comparison at fixed settings, zero tuning
+	$(PY) $(S)/04_family4_nonlinear_ml/fair_comparison.py
 
-armote-ladder:  ## Tier 4c: ARMOTE S1-S4 ladder summary
-	$(PY) $(S)/04_tier4_nonlinear_ml/armote_ladder_cv.py
+# ---------------- family 5: symbolic regression ----------------
 
-# ---------------- tier 5: symbolic regression ----------------
+sisso:  ## SISSO Full / Robust / v2 / +SD_grain
+	$(PY) $(S)/05_family5_symbolic_regression/sisso_analysis.py
+	$(PY) $(S)/05_family5_symbolic_regression/sisso_robust.py
 
-sisso:  ## Tier 5a: SISSO Full + Robust + v2 + SD_grain (~10 min)
-	$(PY) $(S)/05_tier5_symbolic_regression/sisso_analysis.py
-	$(PY) $(S)/05_tier5_symbolic_regression/sisso_robust.py
-	$(PY) $(S)/05_tier5_symbolic_regression/sisso_analysis_v2.py
-	$(PY) $(S)/05_tier5_symbolic_regression/sisso_with_sdgrain.py
+pysr:  ## PySR feature x operator grid (needs Julia)
+	$(PY) $(S)/05_family5_symbolic_regression/pysr_grid_analysis.py
 
-pysr:  ## Tier 5b: PySR grid F1-F3 x O1-O3 (~10 min, needs Julia)
-	$(PY) $(S)/05_tier5_symbolic_regression/pysr_grid_analysis.py
+family5: sisso pysr  ## All symbolic regression
 
-eml:  ## Tier 5c: EML universal-operator symbolic regression
-	$(PY) $(S)/05_tier5_symbolic_regression/eml_regression.py
+# ---------------- validation protocol ----------------
 
-hardness-sr:  ## Tier 5d: HV elbow equation under refit LOO + LOBO
-	$(PY) $(S)/05_tier5_symbolic_regression/hardness_symbolic_regression.py
+grouped:  ## Pooled 5-fold / LOO / LOBO table for every headline model
+	$(PY) $(S)/06_validation/grouped_validation.py
 
-s5:  ## Tier 5e: PySR vs SISSO matched on identical curated-Wen inputs
-	$(PY) $(S)/05_tier5_symbolic_regression/s5_symbolic_comparison.py
+verified:  ## Recompute the manuscript quantities verifiable from this repo
+	$(PY) $(S)/06_validation/verified_analysis.py
 
-symbolic: sisso pysr eml hardness-sr s5  ## All symbolic regression
+external:  ## Tiered literature stress test
+	$(PY) $(S)/06_validation/external_validation.py
 
-# ---------------- validation floor ----------------
+audit:  ## Singularity audit of every reported closed form
+	$(PY) $(S)/06_validation/singularity_audit.py
 
-cv-comparison:  ## 5-fold vs LOO vs LOBO for headline models
-	$(PY) $(S)/06_validation_floor/cv_comparison.py
+validation: grouped verified external audit  ## Whole validation protocol
 
-external:  ## External validation on 82 literature points
-	$(PY) $(S)/06_validation_floor/external_validation.py
-	$(PY) $(S)/06_validation_floor/pysr_external_validation.py
+verify:  ## Fail fast if the manuscript drifts from its verified artifacts
+	$(PY) $(S)/06_validation/validate_manuscript.py
 
-audit:  ## Singularity audit of all compact equations
-	$(PY) $(S)/06_validation_floor/singularity_audit.py
+# ---------------- hardness ----------------
 
-bootstrap-sr:  ## Bootstrap CIs on compact-equation constants
-	$(PY) $(S)/06_validation_floor/bootstrap_sr_constants.py
-
-per-batch-lobo:  ## Per-batch LOBO breakdown with hull containment
-	$(PY) $(S)/06_validation_floor/per_batch_lobo.py
-
-mc-grain:  ## Monte Carlo grain-size sensitivity
-	$(PY) $(S)/06_validation_floor/mc_grain_size_sensitivity.py
-
-vif:  ## VIF + condition-number diagnostics
-	$(PY) $(S)/06_validation_floor/vif_diagnostics.py
-
-ceiling:  ## Noise-limited R^2 ceiling from variance decomposition
-	$(PY) $(S)/06_validation_floor/variance_ceiling.py
-
-unified:  ## Rebuild results/unified_model_table.csv
-	$(PY) $(S)/06_validation_floor/unified_model_table.py
-
-# ---------------- hardness / Tabor ----------------
-
-hardness:  ## Tabor C_eff + HV scaling + HV-YS rank analysis
+hardness:  ## Tabor ratio, HV scaling, and HV-YS rank analysis
 	$(PY) $(S)/07_hardness_tabor/hardness_analysis.py
 
-# ---------------- figures ----------------
+# ---------------- outputs ----------------
 
-figures:  ## Regenerate paper figures from cached CSVs (fast)
+figures:  ## Regenerate every publication figure from cached results (fast)
 	$(PY) $(S)/figures/make_framework_overview.py
+	$(PY) $(S)/figures/make_batch_colored_figures.py
+	$(PY) $(S)/figures/_make_hv_ys_rank_fig.py
 	$(PY) $(S)/figures/make_property_figures.py
 	$(PY) $(S)/figures/make_provenance_figure.py
-	$(PY) $(S)/figures/make_cv_comparison_figure.py
-	$(PY) $(S)/figures/make_pysr_sisso_pareto.py
 	$(PY) $(S)/figures/replot_fair_comparison_heatmap.py
-	$(PY) $(S)/figures/make_graphical_abstract.py
+	$(PY) $(S)/figures/make_restyled_figures.py
+
+paper:  ## Build paper/main.pdf and paper/supplementary.pdf
+	$(LATEX) main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+	$(LATEX) supplementary.tex && bibtex supplementary && pdflatex -interaction=nonstopmode supplementary.tex && pdflatex -interaction=nonstopmode supplementary.tex
+	$(MAKE) clean
+
+notebook:  ## Regenerate the analysis notebook from its generator
+	$(PY) notebook/_generate_notebook.py
+
+report:  ## Rebuild the comprehensive Word report from live results
+	$(PY) report/generate_report.py
+
+all: figures report notebook paper  ## Build every artifact from current results

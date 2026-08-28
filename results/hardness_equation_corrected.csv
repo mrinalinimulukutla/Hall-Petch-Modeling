@@ -1,0 +1,5 @@
+model,protocol,R2,RMSE,c0,c1,c2,equation,status,n
+HV corrected fixed form,full fit,0.74391844302295,16.898419263092507,222.30610912974825,84.47899346429266,-1.0045751310543036,HV = c0 + c1*(6.93-d)/SD_GS + c2*dH_mix/HoldTime^2,form selected previously; coefficients fit to all data,
+HV corrected fixed form,5-fold,0.7254603456779132,17.496834001049205,,,,coefficients refit within every training fold,post-selection fixed-form validation; not nested equation discovery,94.0
+HV corrected fixed form,LOO,0.7266350406636017,17.459361315547557,,,,coefficients refit within every training fold,post-selection fixed-form validation; not nested equation discovery,94.0
+HV corrected fixed form,LOBO,0.6356118500964091,20.15761066695692,,,,coefficients refit within every training fold,post-selection fixed-form validation; not nested equation discovery,94.0

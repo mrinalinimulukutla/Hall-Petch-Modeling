@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from _config import REPO_ROOT, DATA_DIR, RAW_DATA_DIR, RESULTS_DIR, PLOTS_DIR, PAPER_DIR, PAPER_FIG_DIR
+import _figstyle as S
+S.apply()
 BASE = str(REPO_ROOT)
 OUT_FIG = f'{PAPER_FIG_DIR}/fig08_symbolic_pareto.png'
 OUT_CSV = f'{RESULTS_DIR}/pysr_pareto_full.csv'
@@ -88,28 +90,20 @@ print(f"SISSO v2 landscape: {sisso_v2_pts}")
 
 # --- Build figure
 fig, ax = plt.subplots(figsize=(5.0, 4.6))
-plt.rcParams.update({
-    'font.size': 13,
-    'axes.labelsize': 14,
-    'axes.titlesize': 14,
-    'xtick.labelsize': 12,
-    'ytick.labelsize': 12,
-    'legend.fontsize': 11,
-})
 
 # PySR Pareto front
-ax.plot(eqs['complexity'], eqs['loss'], 'o-', color='#1f77b4',
+ax.plot(eqs['complexity'], eqs['loss'], 'o-', color=S.LINEAR,
         markersize=7, linewidth=1.6, label='PySR Pareto front', zorder=2)
 
 # SISSO v1 Full point
 ax.scatter([sisso_v1_pt[0]], [sisso_v1_pt[1]],
-           marker='*', s=240, color='#d62728', edgecolor='black',
+           marker='*', s=240, color=S.HIGHLIGHT, edgecolor='black',
            linewidth=1.0, label='SISSO 3-term (Eq. 4)', zorder=4)
 
 # SISSO v2 landscape points
 xs = [p[0] for p in sisso_v2_pts]
 ys = [p[1] for p in sisso_v2_pts]
-ax.scatter(xs, ys, marker='s', s=80, color='#2ca02c', edgecolor='black',
+ax.scatter(xs, ys, marker='s', s=80, color=S.OKABE['green'], edgecolor='black',
            linewidth=0.8, label='SISSO v2 (dim 1--4)', zorder=3)
 
 ax.set_xlabel('Equation complexity / $k_\\mathrm{eff}$', fontsize=14)
@@ -118,8 +112,6 @@ ax.set_yscale('log')
 ax.grid(True, which='both', alpha=0.3)
 ax.legend(loc='upper right', framealpha=0.9)
 ax.set_xlim(left=0)
-
-plt.tight_layout()
 plt.savefig(OUT_FIG, dpi=200, bbox_inches='tight')
 print(f"\nSaved {OUT_FIG}")
 print("Done.")

@@ -136,7 +136,5 @@ ax.set_ylabel('Predicted YS (MPa)')
 ax.set_aspect('equal')
 ax.grid(True, alpha=0.3)
 ax.legend(loc='upper left', framealpha=0.92)
-
-plt.tight_layout()
 plt.savefig(OUT, dpi=200, bbox_inches='tight')
 print(f"\nSaved {OUT}")

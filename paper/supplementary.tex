@@ -1,498 +1,707 @@
-\documentclass[11pt]{article}
+\documentclass[a4paper,11pt]{article}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{lmodern}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{siunitx}
 \usepackage{tabularx}
+\usepackage{float}
+\usepackage[protrusion=true,expansion=false]{microtype}
 \usepackage[hidelinks]{hyperref}
 
 \sisetup{separate-uncertainty=true}
 \graphicspath{{figures/}}
-
+\newcommand{\familyone}{Classical Hall-Petch}
+\newcommand{\familytwo}{Physics-derived descriptors}
+\newcommand{\familythree}{Composition/processing}
+\newcommand{\familyfour}{Non-linear ML (ARMOTE-CV)}
+\newcommand{\familyfive}{Symbolic regression}
 \renewcommand{\thesection}{S\arabic{section}}
 \renewcommand{\thetable}{S\arabic{table}}
 \renewcommand{\thefigure}{S\arabic{figure}}
 \renewcommand{\theequation}{S\arabic{equation}}
+\setlength{\emergencystretch}{3em}
 
 \title{Supplementary Information for:\\
-\emph{Revisiting Hall--Petch strengthening in FCC high-entropy alloys: Best practices for building and auditing machine-learning strength models}}
-\author{M.~Mulukutla, S.~P.~Padhy, W.~Xu, B.~P.~Sahu, I.~Karaman, R.~Arr\'{o}yave}
+\emph{Revisiting Hall--Petch strengthening in FCC multi-principal-element alloys: Best practices for building and auditing machine-learning strength models}}
+\author{Mrinalini~Mulukutla$^{1,*}$, Shakti~Prasad~Padhy$^{2}$, Douglas~Allaire$^{2}$,\\
+Ibrahim~Karaman$^{1}$, Raymundo~Arr\'{o}yave$^{1,2}$\\[0.5em]
+\small $^{1}$Department of Materials Science and Engineering, Texas A\&M University,\\
+\small College Station, TX 77843, USA\\
+\small $^{2}$J. Mike Walker '66 Department of Mechanical Engineering, Texas A\&M University,\\
+\small College Station, TX 77843, USA\\
+\small $^{*}$Corresponding author: mrinalini.mulukutla@tamu.edu}
 \date{}
 
 \begin{document}
 \maketitle
+\begingroup
+\sloppy
 \tableofcontents
+\endgroup
 
-\section{Exploratory data analysis}
-\label{si:eda}
+This Supplementary Information follows the same fixed model-family hierarchy as Fig.~1 of the main paper: Family~1 (\familyone), Family~2 (\familytwo), Family~3 (\familythree), Family~4 (\familyfour), and Family~5 (\familyfive). The names and order remain unchanged in both documents. S1--S4 are cumulative input sets within Family~4, not separate model families. E1--E3 are literature evidence classes and are also separate from the model hierarchy.
 
-\subsection{Sample provenance and synthesis}
+Primary internal performance is reported using shuffled 5-fold cross-validation, leave-one-out (LOO), and leave-one-batch-out (LOBO) validation. LOO operates at the record level. When a composition is repeated, another record with the same composition can remain in the training set. We therefore do not describe LOO as strict unseen-composition validation. LOBO tests transfer to a new Bayesian-optimization iteration. External literature testing and singularity audits of closed-form equations are reported separately from internal predictive validation.
 
-The 94 alloys analyzed in this work come from two Bayesian-optimization (BO) campaigns conducted at Texas A\&M University under the BIRDSHOT initiative within the ARL HTMDEC program, building on an earlier six-element campaign that established the BIRDSHOT closed-loop workflow~\cite{Mulukutla2024BIRDSHOT,Hastings2025FCC}. Figure~\ref{fig:synthesis_verification} documents representative synthesis-verification data, and Figure~\ref{fig:provenance} summarizes design-space coverage.
+\section{Dataset audit and exploratory analysis}
+\label{si:data}
 
-The first contributing campaign (batches BBA, BBB, BBC; 34 alloys, ${\sim}37\%$ of the dataset) extended the design space to eight elements (Al--Co--Cr--Cu--Fe--Mn--Ni--V) under a single FCC phase-stability constraint. CALPHAD screening (Thermo-Calc TCHEA6/7) retained compositions with FCC fraction ${\geq}0.99$ at both 700 and 950~\si{\degreeCelsius}, yielding ${\sim}27\,000$ feasible alloys. An initial diversity-balanced batch from $k$-medoids clustering was followed by EHVI-driven iterations over Gaussian-process surrogates. Thermomechanical processing was held fixed (60\% cold reduction; recrystallization at 950~\si{\degreeCelsius} for 0.5~h; water quench), so the BBA/BBB/BBC alloys vary only in chemistry. The campaign design, feasibility-aware acquisition function, and full synthesis record (48 alloys over the three iterations, including the $\sigma$-phase failures that the present single-phase dataset excludes) are documented in the companion BRAVE paper~\cite{Mulukutla2026BRAVE}.
+\subsection{Campaign provenance, synthesis, and characterization}
 
-The second contributing campaign (batches CBA, CBB, CBC; 59 alloys, ${\sim}63\%$) is a microstructure-aware BO over a six-element Co--Cr--Fe--Mn--Ni--V subspace ($c_\text{Al} = c_\text{Cu} = 0$ by design). Cold work, recrystallization temperature, and hold time enter as design variables alongside composition, spanning $c_\text{cw} \in \{40, 50, 60\}\%$, $T_\text{rx}$ from 675 to 1250~\si{\degreeCelsius}, and hold times of $\{1, 2, 4, 8\}$~h. The resulting alloys span a wide range of grain sizes at nominally identical compositions, supplying the within-composition microstructural variation that underpins the within-replicate Hall--Petch analysis of Section~\ref{si:premodel}.
+The broader alloy-discovery effort began with Campaign A, which established the closed-loop, multi-objective workflow~\cite{Hastings2025FCC}. Campaign A is a methodological prequel and does not contribute records to the present property-modeling dataset. This dataset combines the subsequent B and C Bayesian-optimization campaigns carried out at Texas A\&M University through the BIRDSHOT initiative within the ARL HTMDEC program~\cite{Mulukutla2024BIRDSHOT,Mulukutla2026BRAVE}. The B campaign contributes 35 records from batches BBA, BBB, and BBC, including 34 with YS. It explored the Al--Co--Cr--Cu--Fe--Mn--Ni--V system under an FCC phase-stability constraint while holding processing fixed. Section~2.2 of Ref.~\cite{Mulukutla2026BRAVE} documents the B-campaign synthesis and specimen-preparation workflow.
 
-All ingots ($\sim$30--35~g) were produced by vacuum arc melting (Edmund B\"{u}hler AM~200) from $>99.9$~wt.\% elemental precursors under high-purity Ar, with 7--10 flip-remelts and mass-loss monitoring (ingots exceeding 0.5\% loss were reprocessed). Each ingot was homogenized for 24~h at 950--1150~\si{\degreeCelsius}, cold-rolled to the campaign-specific reduction, recrystallized under controlled conditions, and water-quenched. Realized compositions were verified by EDS (15 points per ingot); the mean ingot-level deviation from the BO target was 0.4--0.6~at.\%, with 90--99\% of measurements within 1~at.\% of nominal~\cite{Mulukutla2024BIRDSHOT}. Wire-EDM was used to extract miniaturized SS-3 tensile specimens, nanoindentation coupons, and coupons for SEM/EBSD/EDS/XRD/Vickers measurements.
+The C campaign contributes 59 records from CBA, CBB, and CBC. It used insights from the B campaign to focus on V--Cr--Mn--Fe--Co--Ni alloys and jointly varied composition, cold work, recrystallization temperature, and hold time. During design-space curation, a modified JMAK-type static-recrystallization and grain-growth prior provided grain-size estimates for feasible candidates. The complete C-campaign and grain-growth-model details will be reported separately. The present regression analysis uses measured EBSD grain sizes rather than the design-stage estimates.
 
-\begin{figure}[htb]
+Both campaigns followed the same high-level route of vacuum-arc melting from high-purity elements, homogenization, cold rolling, recrystallization, and quenching. EDS and XRD checked realized chemistry and phase constitution; SEM and EBSD documented the microstructure; and quasistatic tensile and Vickers indentation measurements supplied YS and HV. Figure~2 of the main paper shows representative chemistry and microstructure verification. Figure~\ref{fig:provenance} shows the non-uniform composition and processing coverage that motivates grouped validation.
+
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{composition_microstructure.png}
-  \caption{Representative synthesis verification for the microstructure-aware campaign: measured (EDS) versus target composition, BSE micrograph and EBSD IPF map of a representative recrystallized alloy (CBC04), and its equivalent-circle-diameter grain-size distribution, whose right-skewed shape motivates tabulating the within-alloy grain-size standard deviation $\text{SD}_\text{grain}$ for every entry.}
-  \label{fig:synthesis_verification}
-\end{figure}
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=\textwidth]{fig_provenance.png}
-  \caption{Provenance of the alloys: (a)~per-element composition coverage across the six BO batches; (b)~processing-parameter coverage. The B campaign collapses to a single processing point; the C campaign fans out across a $3 \times {\sim}10$ grid.}
+  \includegraphics[width=0.96\textwidth]{fig_provenance.png}
+  \caption{Composition and processing coverage by batch. The B campaign uses one fixed processing condition, while the C campaign spans a processing grid. The coverage follows the experimental design and is not a random sample of the composition simplex.}
   \label{fig:provenance}
 \end{figure}
 
-\subsection{Property distributions and correlations}
+\subsection{Audited record structure and distributions}
 
-Figure~\ref{fig:property_distributions} shows property distributions stacked by batch. Yield strength spans 152--544~\si{MPa} (mean $269 \pm 82$), Vickers hardness 58--228 ($133 \pm 33$), and grain size 15--212~\si{\micro\meter} ($58 \pm 43$); the 65--82~\si{\micro\meter} gap in the grain-size histogram reflects the discrete C-campaign processing grid and the B-campaign's single recipe, not a bimodality in grain growth. Figure~\ref{fig:tensile_curves} shows the underlying true stress--strain curves for the C-campaign alloys. The top correlates with yield strength are $d^{-1/2}$ ($r = 0.66$), V content ($r = 0.51$), and the VLC misfit parameter $\Phi_\text{VLC}$ ($r = 0.45$); several descriptors are highly mutually correlated (e.g., $\delta$ and $\Phi_\text{VLC}$, $r > 0.9$), motivating regularized and tree-based methods (Fig.~\ref{fig:corr_matrix}). Residual scatter around the grain-only Hall--Petch fit is strongly correlated with composition, particularly V: V-containing alloys show systematically higher yield strengths at comparable grain sizes, consistent with V's large atomic-size mismatch (134~pm vs.\ $\bar{r} \approx 127$~pm).
+The source workbook contains 94 records and 19 original columns. Every composition row sums to 100~at.\% (Table~\ref{tab:data}). YS is available for 93 records, and HV is available for all 94. BBA09 is the only record without YS. The B batches contain 35 hardness records and 34 YS records. The C batches contain 59 records for both targets. Processing is fixed within the B campaign, whereas the C campaign varies cold work, recrystallization temperature, and hold time together with composition.
 
-\begin{figure}[htb]
+\begin{table}[H]
+\centering
+\caption{Audited dataset statistics. Means and standard deviations are sample statistics.}
+\label{tab:data}
+\begin{tabular}{lrrrr}
+\toprule
+Quantity & $n$ & Min & Max & Mean $\pm$ SD \\
+\midrule
+YS (MPa) & 93 & 151.5 & 544.5 & $268.5\pm81.6$ \\
+HV & 94 & 57.6 & 227.5 & $133.9\pm33.6$ \\
+$d$ ($\mu$m) & 94 & 14.66 & 211.75 & $57.39\pm42.67$ \\
+$\mathrm{SD}_{\mathrm{grain}}$ ($\mu$m) & 94 & 8.32 & 321.06 & $44.72\pm44.83$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The full dataset contains 82 unique compositions. The 93-record YS subset contains 81. Nine composition groups are repeated and account for 21 records. One composition, Co$_4$Cr$_4$Fe$_4$Mn$_4$Ni$_{72}$V$_{12}$, appears in both CBB and CBC, with three CBB records and one CBC record. Record-level LOO can therefore contain exact-composition overlap. LOBO reduces this overlap but does not remove it completely. We report these facts as part of the validation audit rather than treating them as another validation protocol.
+
+Mean grain size and its standard deviation are strongly correlated ($r=0.801$). The dimensionless coefficient of variation, $\mathrm{SD}_{\mathrm{grain}}/d$, ranges from 0.47 to 2.99. A claim that distribution width has an independent physical role should therefore compare raw SD with normalized width and with distribution moments such as $E[d^{-1/2}]$.
+
+The source data also contain measurement scatter, which is distinct from grain-distribution width. $\mathrm{SD}_{YS}$ is available for 80 records and ranges from 0.2 to \SI{98.7}{MPa}; $\mathrm{SD}_{HV}$ is available for all 94 and ranges from 1.43 to 12.44 HV. These values are not used as model features because replicate counts and reporting definitions are not consistent across records. In contrast, $\mathrm{SD}_{\mathrm{grain}}$ is an EBSD microstructure descriptor and is evaluated explicitly as a predictor.
+
+The strongest composition--grain-size correlations include $r(d,c_{\mathrm{Cr}})=+0.38$ and $r(d,c_{\mathrm{Al}})=-0.32$. On average, Cr-rich alloys are therefore coarser and Al-rich alloys are finer. These signs were reversed in the earlier draft. A regression of $d^{-1/2}$ on composition explains approximately 40\% of its variance. Adding processing raises this value to approximately 54\%. Composition and grain size are therefore not experimentally orthogonal.
+
+Figure~\ref{fig:distributions} shows the global property distributions. The gap in the grain-size histogram comes from the C-campaign processing grid and the B campaign's fixed recipe. It is not evidence of a bimodal grain-growth mechanism. Figure~\ref{fig:tensile} shows the C-campaign true stress--strain curves used to extract 0.2\% offset YS. Figure~\ref{fig:correlation} summarizes correlations among composition, processing, and descriptors. Several deterministic descriptors are strongly correlated with one another, so coefficient and feature-importance interpretations must account for redundancy.
+
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth]{fig_property_histograms.png}
-  \caption{Property distributions across the dataset, stacked by BO batch: (a)~yield strength, (b)~Vickers hardness, (c)~grain size (log axis), (d)~effective Tabor factor $C_\text{eff} = \text{HV(MPa)}/\sigma_y$ ($5.13 \pm 1.36$; dashed line marks the classical $C = 3$).}
-  \label{fig:property_distributions}
+  \includegraphics[width=0.72\textwidth]{fig_property_histograms.png}
+  \caption{Audited YS, HV, grain-size, and effective hardness-to-yield distributions by batch.}
+  \label{fig:distributions}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth]{tensile_tests.png}
-  \caption{True stress--strain curves for all C-campaign alloys at $5\times10^{-4}$~s$^{-1}$. The 0.2\% offset yield strengths extracted from these curves are the YS values used throughout the study.}
-  \label{fig:tensile_curves}
+  \includegraphics[width=0.72\textwidth]{tensile_tests.png}
+  \caption{True stress--strain curves for the C-campaign records at a nominal strain rate of $5\times10^{-4}$~s$^{-1}$. The 0.2\% offset values are the YS targets used in the analysis.}
+  \label{fig:tensile}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{fig02_correlation_matrix.png}
-  \caption{Pearson correlation matrix for composition, processing, and descriptor features.}
-  \label{fig:corr_matrix}
+  \includegraphics[width=0.80\textwidth]{fig02_correlation_matrix.png}
+  \caption{Pearson correlation matrix for composition, processing, grain-size, and descriptor variables. Correlation is descriptive and does not establish independent mechanistic effects.}
+  \label{fig:correlation}
 \end{figure}
 
-\section{Pre-modeling diagnostics}
-\label{si:premodel}
+\subsection{Grouped-validation conventions and primary results}
+\label{si:validation}
 
-Before fitting predictive models we examine three questions that bear on everything downstream: (i)~does grain size vary independently of composition? (ii)~how much compositional ground do the six BO batches share? (iii)~what is the highest predictive accuracy any model could plausibly reach?
+For every protocol, predictions from all held-out records are pooled before calculating
+\begin{equation}
+Q^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}.
+\end{equation}
+The manuscript reports this pooled quantity as cross-validated $R^2$. It is not the mean of the fold-specific $R^2$ values; Table~\ref{tab:grouped} lists the pooled scores for every model. Preprocessing is fit within each training fold. To calculate batch-clustered intervals, the six batches are resampled with replacement 1000 times while each batch remains intact. Because there are only six clusters, these intervals show sensitivity to the sampled batches but are not precise inferential confidence intervals.
 
-\emph{Identifiability of the $\sigma_0$/$k_\text{HP}$ partition.} Cr-rich alloys tend to recrystallize with smaller grains ($r(d, c_\text{Cr}) = +0.38$, $p = 2\times10^{-4}$) and Al-rich alloys with coarser ones ($r = -0.32$). A multivariate regression of $d^{-1/2}$ on the eight elemental fractions explains 40\% of its variance, rising to 54\% with the three processing variables added. The remaining ${\sim}46\%$ is independent of chemistry and processing, which makes the $\sigma_0$/$k_\text{HP}$ split identifiable rather than confounded. Within the 64-feature interaction pool used by the legacy tree models the apparent variance-inflation factor of $d^{-1/2}$ rises to 16.8, but this is artifactual---that pool contains element$\times d^{-1/2}$ cross-terms and other functions of $d^{-1/2}$ by construction; against the physically independent features the inflation is VIF $\approx 1.7$--$2.2$.
+\begin{table}[H]
+\centering
+\caption{Primary grouped-validation results reproduced by the revision-specific validation script. The Family~5 HV result is conditional on an equation structure selected using the complete dataset before the coefficients were refit in each fold.}
+\label{tab:grouped}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllrrr}
+\toprule
+Target & Family/model & Status & 5-fold & LOO & LOBO \\
+\midrule
+YS & F1 Classical HP & baseline & 0.405 & 0.406 & 0.373 \\
+YS & F2 PCA-OLS & fold-contained & 0.462 & 0.480 & 0.362 \\
+YS & F3 M3 & pre-specified & 0.666 & 0.652 & 0.625 \\
+YS & F3 M15 SD interaction & pre-specified & 0.731 & 0.694 & 0.694 \\
+YS & F4 Lasso S2 & fixed settings & 0.683 & 0.674 & 0.621 \\
+YS & F4 LightGBM S2 & fixed settings & 0.632 & 0.574 & 0.615 \\
+HV & F1 Classical HP & baseline & 0.086 & 0.136 & $-0.077$ \\
+HV & F4 LightGBM S1 & fixed settings & 0.195 & 0.323 & 0.112 \\
+HV & F5 fixed form & post-selected & 0.725 & 0.727 & 0.636 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\emph{Batch coverage.} Six principal components are needed to capture 95\% of the compositional variance. In the dominant PC1--PC2 plane, the average fraction of one batch's compositions falling inside another's convex hull is 0.21 (Fig.~\ref{fig:premodel_pca}), with coverage of the held-out batch by the remaining five ranging from 0.29 (CBC, an isolated V-rich, Cu-free region) to 0.87 (CBA). An aggregate LOBO $R^2$ therefore averages over qualitatively different held-out tasks---genuine extrapolation in some folds and near-interpolation in others; the per-batch breakdown is given in Section~\ref{si:diagnostics}.
+The validation hierarchy changes the scientific interpretation. LOO measures record-level interpolation and can benefit from repeated or nearby compositions. LOBO tests a new iteration while retaining the practices shared across the broader program, and is therefore the primary internal grouped-transfer test. The literature stress test asks a different question about numerical behavior on heterogeneous published records, while singularity auditing checks whether a closed form remains finite and bounded over the audited domain.
 
-\emph{Noise-limited ceiling.} Nine of the 81 unique compositions were synthesized more than once; the within-group YS scatter sets the bar for a composition-only predictor at $R^2 \approx 0.86$. Each alloy was tensile-tested multiple times, and the within-alloy standard deviation (rms $= 15.3$~\si{MPa} over the 80 alloys with replicate tests) sets the noise-limited ceiling for any model using composition and grain size at $R^2 \approx 0.97$. The best in-sample model of this work (PySR accuracy, LOO $R^2 = 0.765$) reaches roughly 79\% of that ceiling; roughly a fifth of the explainable variance remains unaccounted for by any model tested.
+\subsection{Why no hard predictive ceiling is reported}
 
-\begin{figure}[htb]
+The source analysis contained two incompatible ceiling calculations. If every singleton composition is assigned zero residual, an in-sample composition-mean oracle gives approximately $R^2=0.86$. If variance is pooled only from repeated compositions, the within-composition variance is approximately \SI{6979}{MPa^2}. This is slightly larger than the total YS variance of \SI{6651}{MPa^2}, giving a formal value near $-0.05$. Neither value is a defensible out-of-sample ceiling. There are 72 singleton YS compositions, and the repeated groups also differ in grain size and processing.
+
+Similarly, $1-\langle\mathrm{SD}_{YS}^2\rangle/\mathrm{Var}(YS)\approx0.97$ is not a universal noise ceiling. This calculation assumes that the reported within-alloy standard deviations are irreducible errors in the modeled target. If the target is a replicate mean, its sampling uncertainty depends on the number of replicates through $\mathrm{SD}/\sqrt{n}$. A measurement-limited ceiling cannot be estimated without replicate-level measurements and replicate counts.
+
+\subsection{Batch coverage in composition space}
+
+Six principal components are needed to capture approximately 95\% of the composition variance. In the PC1--PC2 projection, the mean pairwise convex-hull overlap is approximately 0.21 (Fig.~\ref{fig:hulls}). This two-dimensional diagnostic does not prove support in the full composition space, but it explains why the LOBO folds differ in difficulty. CBC is relatively isolated, while CBA is well covered by the remaining batches. The aggregate LOBO score therefore combines near-interpolation with genuine extrapolation. It should be read together with the per-batch results in Table~\ref{tab:batch}.
+
+\begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{fig_premodel_hulls_heatmap.png}
-  \caption{Batch coverage in composition space (PC1--PC2 of the eight elemental fractions). \textbf{(Left)}~Convex hulls of each BO batch. \textbf{(Right)}~Pairwise hull-overlap matrix; the mean off-diagonal overlap is 0.21, with marked asymmetry (CBC and BBB isolated at 0.29 and 0.33; CBA reachable at 0.87).}
-  \label{fig:premodel_pca}
+  \includegraphics[width=0.96\textwidth]{fig_premodel_hulls_heatmap.png}
+  \caption{Batch coverage in the PC1--PC2 projection of composition space: batch convex hulls (left) and pairwise hull containment (right). These values depend on the projection and do not guarantee support in the full composition space.}
+  \label{fig:hulls}
 \end{figure}
 
-\section{Solid-solution strengthening models: formulations and benchmarks}
+\section{Family 1: \familyone}
+\label{si:scaling}
+
+Nine pre-specified scaling laws were fit to YS (Table~\ref{tab:scalinglaws}). Five monotonic laws fall within $\Delta\mathrm{BIC}<2$ of the classical Hall--Petch form. The optimized exponent is $n=0.548$. Its Bayesian posterior is $0.53\pm0.16$, with a 94\% HDI of approximately $[0.22,0.82]$. These results support $d^{-1/2}$ as a simple baseline but do not statistically rule out nearby exponents.
+
+\begin{table}[H]
+\centering
+\caption{Family~1 comparison of pre-specified grain-size laws for YS, ranked by BIC. Here, $p$ is the number of fitted regression coefficients.}
+\label{tab:scalinglaws}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Scaling law $f(d)$ & $p$ & Train $R^2$ & LOO $R^2$ & LOO RMSE & BIC & $\Delta$BIC \\
+\midrule
+$d^{-1/2}$ (Hall--Petch) & 2 & 0.429 & 0.406 & 62.5 & 774.5 & 0.0 \\
+$\ln(d)/d$ & 2 & 0.429 & 0.406 & 62.5 & 774.5 & 0.0 \\
+$d^{-2/3}$ & 2 & 0.429 & 0.405 & 62.6 & 774.6 & 0.1 \\
+$d^{-1/3}$ & 2 & 0.427 & 0.403 & 62.6 & 774.9 & 0.4 \\
+$d^{-1}$ & 2 & 0.419 & 0.395 & 63.1 & 776.1 & 1.6 \\
+$\ln(d)$ & 2 & 0.413 & 0.388 & 63.4 & 777.2 & 2.7 \\
+$d^{-0.548}$ & 3 & 0.430 & 0.406 & 62.5 & 779.0 & 4.5 \\
+$d^{-1/2}+d^{-1}$ & 3 & 0.430 & 0.395 & 63.1 & 779.0 & 4.5 \\
+$d^{-1}+d^{-2}$ & 3 & 0.429 & 0.387 & 63.5 & 779.1 & 4.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Bayesian PSIS-LOO comparison for the Family~1 YS laws. The stacking solution is reported but is not treated as proof of a unique law.}
+\label{tab:bayesian}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Model & elpd$_{\mathrm{loo}}$ & $\Delta$LOO & $p_{\mathrm{loo}}$ & Weight \\
+\midrule
+Hall--Petch $d^{-1/2}$ & $-518.5$ & 0.0 & 4.2 & 1.000 \\
+Composite $d^{-1/2}+d^{-1}$ & $-518.5$ & 0.1 & 4.2 & 0.000 \\
+Critical-thickness $\ln(d)/d$ & $-518.5$ & 0.1 & 4.3 & 0.000 \\
+Intermediate $d^{-2/3}$ & $-518.7$ & 0.2 & 4.4 & 0.000 \\
+Baldwin $d^{-1/3}$ & $-518.7$ & 0.2 & 4.2 & 0.000 \\
+Optimized exponent $d^{-n}$ & $-518.8$ & 0.3 & 4.5 & 0.000 \\
+Logarithmic $\ln(d)$ & $-519.7$ & 1.2 & 3.9 & 0.000 \\
+Dunstan--Bushby $d^{-1}$ & $-520.3$ & 1.8 & 4.3 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The classical YS baseline gives LOO/LOBO $R^2=0.406/0.373$ (Fig.~\ref{fig:scaling}). For HV, the corresponding values are $0.136/-0.077$. Mean grain size is therefore a useful YS baseline within the sampled program, but it does not transfer reliably across batches for HV.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{fig_scaling_deltabic.png}
+  \caption{Information-criterion differences among pre-specified YS grain-size laws.}
+  \label{fig:scaling}
+\end{figure}
+
+The Bayesian comparison is summarized in Table~\ref{tab:bayesian}, with the fitted laws in Fig.~\ref{fig:scalingfits}, the free-exponent posterior in Fig.~\ref{fig:exponent}, and the model weights in Fig.~\ref{fig:bma}. The Bayesian stacking weight concentrates on the classical form, even though several candidate laws have almost identical expected log predictive density. We therefore do not treat this boundary solution as decisive evidence for one exponent. Parameter counting also differs across the stored tables. Some Bayesian tables include the noise parameter, while the frequentist BIC tables count regression coefficients. The revised manuscript compares models only within internally consistent tables.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.64\textwidth]{fig_scaling_fits.png}
+  \caption{Top Family~1 YS scaling laws over the observed grain-size range. Their close overlap shows why the data do not identify a unique exponent.}
+  \label{fig:scalingfits}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.64\textwidth]{fig_bayesian_n.png}
+  \caption{Posterior distribution of the free grain-size exponent $n$ in $\sigma_y=\sigma_0+kd^{-n}$; the dashed line marks $n=0.5$.}
+  \label{fig:exponent}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.64\textwidth]{fig_bayesian_bma.png}
+  \caption{Bayesian model-averaged grain-only prediction with its 94\% credible band. The large residual scatter shows that grain size alone does not capture the dominant property variation.}
+  \label{fig:bma}
+\end{figure}
+
+The within-replicate analysis (Table~\ref{tab:withingroup}) gives local slopes from approximately $-8539$ to 9282 in Hall--Petch units. The fixed-effect pooled slope is near 2144, with Cochran $Q\approx251$ and $I^2=96.8\%$. This apparent heterogeneity cannot be attributed to composition because most groups contain only two records and processing is not held fixed. In addition, the two-stage $k_{\mathrm{eff}}$ regression subtracts an intercept from a model that already assumes constant $k$. The supported conclusion is that constant-slope M3 is the best predictive model in Family~3. This design cannot identify variation in $k_{\mathrm{HP}}$.
+
+\begin{table}[H]
+\centering
+\caption{Descriptive within-composition fits for the nine repeated-composition groups (21 records). The values compare transformations after group demeaning but do not identify composition-specific slopes.}
+\label{tab:withingroup}
+\small
+\begin{tabular}{lrr}
+\toprule
+Scaling law & Pooled within-group $R^2$ & $R^2$ for the $n=3$ group \\
+\midrule
+$d^{-1/2}$ & 0.778 & 0.995 \\
+$d^{-1/3}$ & 0.781 & 0.997 \\
+$d^{-2/3}$ & 0.775 & 0.993 \\
+$d^{-1}$ & 0.769 & 0.987 \\
+$\ln(d)/d$ & 0.776 & 0.993 \\
+$\ln d$ & 0.786 & 0.999 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Family~1 grain-size laws fit separately to HV. The optimized exponent was selected using the full dataset and is descriptive.}
+\label{tab:hvscaling}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Scaling law $f(d)$ & $p$ & Train $R^2$ & LOO $R^2$ & $\Delta$BIC \\
+\midrule
+$d^{-1.728}$ & 3 & 0.193 & 0.166 & 0.0 \\
+$d^{-1}$ & 2 & 0.185 & 0.154 & 0.9 \\
+$d^{-2/3}$ & 2 & 0.175 & 0.143 & 2.1 \\
+$\ln(d)/d$ & 2 & 0.174 & 0.141 & 2.3 \\
+$d^{-1/2}$ & 2 & 0.169 & 0.136 & 2.8 \\
+$d^{-1/3}$ & 2 & 0.161 & 0.128 & 3.7 \\
+$d^{-1/2}+d^{-1}$ & 3 & 0.192 & 0.151 & 4.7 \\
+$\ln(d)$ & 2 & 0.144 & 0.110 & 5.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Family 2: \familytwo}
 \label{si:sss}
 
-\subsection{Varvenne--Leyson--Curtin (VLC)}
+\subsection{Varvenne--Leyson--Curtin}
 
-Following Varvenne et al.~\cite{Varvenne2016,Varvenne2017}, the zero-temperature critical resolved shear stress for a random FCC solid solution is
+Following Varvenne et al.~\cite{Varvenne2016,Varvenne2017}, the zero-temperature critical resolved shear stress is
 \begin{equation}
-\tau_{y0} = 0.051\,\alpha^{-1/3}\,\bar{\mu}\,\Bigl[\tfrac{1+\bar{\nu}}{1-\bar{\nu}}\Bigr]^{4/3}\,f_1(w_c)\,\Bigl(\sum_i c_i\,\Delta V_i^2\,\big/\,b^6\Bigr)^{2/3},
-\label{eq:vlc}
+\tau_{y0}=0.051\alpha^{-1/3}\bar\mu
+\left(\frac{1+\bar\nu}{1-\bar\nu}\right)^{4/3}f_1(w_c)
+\left(\frac{\sum_i c_i\Delta V_i^2}{b^6}\right)^{2/3},
 \end{equation}
-where $\alpha = 0.123$, $\Delta V_i = V_i - \bar{V}$, $b$ is the Burgers vector, and $f_1(w_c) = 0.35$. The polycrystalline yield stress at temperature $T$ is
+and the finite-temperature polycrystal prediction is
 \begin{equation}
-\sigma_\text{VLC}(T) = M\,\tau_{y0}\,\left[1 - (k_B T / \Delta E_b)^{2/3}\right],
-\label{eq:vlc_T}
+\sigma_{\mathrm{VLC}}(T)=M\tau_{y0}
+\left[1-\left(\frac{k_BT}{\Delta E_b}\right)^{2/3}\right].
 \end{equation}
-with Taylor factor $M = 3.06$~\cite{Dieter1986} and activation barrier
+The activation barrier is
 \begin{equation}
-\Delta E_b = 0.274\,\alpha^{1/3}\,\bar{\mu}\,b^3\,\Bigl[\tfrac{1+\bar{\nu}}{1-\bar{\nu}}\Bigr]^{2/3}\,f_2(w_c)\,\Bigl(\sum_i c_i\,\Delta V_i^2\,\big/\,b^6\Bigr)^{1/3},
-\label{eq:vlc_eb}
+\Delta E_b=0.274\alpha^{1/3}\bar\mu b^3
+\left(\frac{1+\bar\nu}{1-\bar\nu}\right)^{2/3}f_2(w_c)
+\left(\frac{\sum_i c_i\Delta V_i^2}{b^6}\right)^{1/3}.
 \end{equation}
-with $f_2(w_c) = 5.70$ and $b = (4\bar{V})^{1/3}/\sqrt{2}$. For the Ni--Co--Fe--Cr--Mn family the atomic volumes are Varvenne's binary-solid-solution-derived values (Ni: 10.94, Co: 11.12, Fe: 12.09, Cr: 12.27, Mn: 12.60~\AA$^3$); for Al, Cu, and V we use pure-element FCC volumes from tabulated lattice parameters, with the V value extrapolated since pure V is BCC. Two implementation choices distinguish our computation from Varvenne's published benchmark predictions: rule-of-mixtures elastic constants in place of measured alloy values (a ${\sim}10\%$ upward bias for the Ni--Co--Fe--Cr--Mn family, more for Invar-type compositions), and neglect of the local-environment fluctuation term, which Varvenne also neglects.
+Here $M=3.06$, $\alpha=0.123$, $f_1=0.35$, $f_2=5.70$, and $b=(4\bar V)^{1/3}/\sqrt{2}$. We use binary-solid-solution-derived volumes for Ni--Co--Fe--Cr--Mn and tabulated or extrapolated FCC volumes for Al, Cu, and V. Rule-of-mixtures elastic constants replace measured alloy values. These choices are material approximations and do not exactly reproduce a first-principles VLC calculation.
 
-\subsection{Labusch (weighted-average HEA extension)}
+\subsection{Weighted Labusch and Toda--Caraballo adaptations}
 
-Following Labusch~\cite{Labusch1970}, the SSS contribution scales as $\sigma \propto \bar{\mu}\,\varepsilon^{4/3}\,c^{2/3}$; our HEA extension is
+The weighted Labusch extension is
 \begin{equation}
-\sigma_\text{Labusch} = \bar{\mu}\,\varepsilon_L^{4/3}\,c_\text{eff}^{2/3}, \quad
-\varepsilon_L = \sqrt{\sum_i c_i \left(\delta_{\mu,i}^2 + \alpha_L^2\,\delta_{r,i}^2\right)},
-\label{eq:labusch}
+\sigma_{\mathrm{Lab}}=\bar\mu\varepsilon_L^{4/3}c_{\mathrm{eff}}^{2/3},\qquad
+\varepsilon_L=\sqrt{\sum_i c_i(\delta_{\mu,i}^2+\alpha_L^2\delta_{r,i}^2)},
 \end{equation}
-with $\alpha_L = 16$ and $c_\text{eff} = 1/n_\text{comp}$. The classical prefactor (of order $1/Z$ with $Z \approx 60$--$180$) is absorbed into the model.
-
-\subsection{Toda-Caraballo--Rivera-D\'{i}az-del-Castillo}
-
-For an HEA with $n$ active elements at fractions $X_i$~\cite{TodaCaraballo2015},
+with $\alpha_L=16$. This multicomponent weighting is an adaptation of Labusch theory~\cite{Labusch1970}. The Toda--Caraballo implementation is
 \begin{equation}
-\sigma_\text{TC} = M\,\Bigl(\sum_i B_i^{3/2}\,X_i\Bigr)^{2/3},
-\quad
-B_i = 3\,\bar{\mu}\,\varepsilon_i^{4/3}\,Z,
-\quad
-\varepsilon_i = \sqrt{\eta'^2_i + \alpha^2\,\delta_i^2},
-\label{eq:tc}
+\sigma_{\mathrm{TC}}=M\left(\sum_iB_i^{3/2}X_i\right)^{2/3},\quad
+B_i=3\bar\mu\varepsilon_i^{4/3}Z,
 \end{equation}
-with damped modulus misfit $\eta'_i = \eta_i / (1 + 0.5\,|\eta_i|)$, $\eta_i = 2(\mu_i - \bar{\mu})/(\mu_i + \bar{\mu})$, Vegard's-law size misfit $\delta_i$, $\alpha = 16$, and $Z = 1/180$ following Labusch's original derivation. Toda-Caraballo and Rivera-D\'{i}az-del-Castillo do not state a numerical $Z$; their figures use per-pair $B_i$ values fitted to binary-alloy data, which absorb unmodeled effects. Lacking those per-pair values for our eight elements, we fall back on the theoretical $Z$, which makes our implementation structurally faithful but systematically overpredictive by factors of 2--5 without calibration.
+with damped modulus and Vegard size misfits~\cite{TodaCaraballo2015}. Pair-specific binary $B_i$ values are not available for the eight-element system, so we use a shared theoretical prefactor.
 
-\subsection{Cantor-anchored benchmark}
+Table~\ref{tab:hvscaling} repeats the scaling-law comparison for hardness. The Labusch and Toda--Caraballo constants are calibrated once to reproduce \SI{125}{MPa} for CoCrFeMnNi~\cite{Otto2013}. VLC is not calibrated. Table~\ref{tab:sss} separates the calibrated errors from the 2--5$\times$ errors of the uncalibrated variants.
 
-We calibrate the free numerical constants of Labusch and TC once, so that each reproduces $\sigma_\text{SSS}(\text{CoCrFeMnNi}) = 125$~\si{MPa}~\cite{Otto2013}, and hold them fixed: $K_\text{Lab} = 0.027$ implies $Z_\text{Lab} = 1/113$ (within Labusch's range) and $Z_\text{TC} = 1/642$ (outside it). VLC remains parameter-free. The Otto $k_\text{HP} = 494$~MPa$\cdot\mu$m$^{1/2}$ subtracts the grain-size contribution from experiment, giving the target $\sigma_{0,\text{exp}} = \sigma_y - 494\,d^{-1/2}$. Table~\ref{tab:sss_benchmark} reports alloy-level literature benchmarks, Table~\ref{tab:sss} the 93-alloy panel results, and Fig.~\ref{fig:sss} the parity plot. Across the panel, calibrated Labusch is the only model with positive raw $R^2$ ($+0.14$) and near-unit magnitude ratio (1.07); TC overshoots by 42\% ($R^2 = -3.18$) and VLC by 78\% ($R^2 = -6.92$). Rank correlations cluster narrowly ($\rho = 0.49$--$0.55$). As standalone LOO predictors all three fall below Hall--Petch alone (0.406): Labusch 0.274, TC 0.091, VLC 0.030. In Ridge regressions alongside $d^{-1/2}$, only calibrated Labusch improves the baseline (LOO $R^2 = 0.469$); VLC and TC each reduce it. With composition fractions present, appending any SSS prediction changes LOO $R^2$ by $\leq 0.002$ and all partial correlations fall below $|r| = 0.10$.
-
-\begin{table}[htb]
+\begin{table}[H]
 \centering
-\caption{Benchmark against literature FCC HEAs (Cantor-anchored calibration).}
-\label{tab:sss_benchmark}
+\caption{Cantor-anchored SSS benchmark for source alloys with traceable references in the local bibliography. Values are model outputs in MPa. $\sigma_{0,\mathrm{exp}}$ is the reported YS after the cited Hall--Petch contribution is subtracted.}
+\label{tab:sssbenchmark}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lrrrr}
 \toprule
-Alloy & $\sigma_\text{VLC}$ & $\sigma_\text{Lab}$ & $\sigma_\text{TC}$ & $\sigma_0$ exp.\ (\si{MPa}) \\
+Alloy & VLC & Labusch & Toda--Caraballo & $\sigma_{0,\mathrm{exp}}$ \\
 \midrule
-NiCoCr~\cite{Yoshida2017}        & 233 & 233 &  135 & 218 \\
-NiCoFeCr (Wu 2014)               & 222 & 160 &  146 & 100 \\
-CoCrFeMnNi~\cite{Otto2013}       & 243 & 125 &  125 & 125 \\
-CoCrFeNiAl (Tung 2007)           & 996 & 645 & 1004 & 800 \\
-AlCoCrCuFeNi (Tung 2007)         & 873 & 493 &  854 & 750 \\
+NiCoCr~\cite{Yoshida2017} & 233 & 233 & 135 & 218 \\
+NiCoFeCr~\cite{Wu2014} & 222 & 160 & 146 & 100 \\
+CoCrFeMnNi~\cite{Otto2013} & 243 & 125 & 125 & 125 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htb]
+\begin{table}[H]
 \centering
-\caption{SSS predictions vs.\ the HP-corrected friction stress on the 93-alloy panel. $+$HP columns show Ridge LOO performance of $\sigma_y = a\,\sigma_\text{SSS} + b\,d^{-1/2} + c$.}
+\caption{Family~2 SSS predictions compared with Family~1 Hall--Petch-corrected YS for 93 alloys. Ratio is the mean prediction divided by the mean corrected response. $+$HP uses Ridge with the SSS estimate and $d^{-1/2}$.}
 \label{tab:sss}
 \small
-\begin{tabular}{lcccccc}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrrrrr}
 \toprule
-SSS Model & Mean (\si{MPa}) & Ratio & $R^2$ & $\rho$ & $+$HP LOO $R^2$ & RMSE \\
+Model & Mean & Ratio & Raw $R^2$ & Spearman $\rho$ & $+$HP LOO $R^2$ & RMSE \\
 \midrule
-VLC (300~K)     & 342 & 1.78 & $-6.92$ & 0.53 & 0.396 & 63.1 \\
-Labusch (cal)   & 206 & 1.07 & $+0.14$ & 0.55 & 0.469 & 59.1 \\
-TC (cal)        & 274 & 1.42 & $-3.18$ & 0.49 & 0.399 & 62.9 \\
-\midrule
-HP only         & --- & --- & --- & --- & 0.406 & 62.5 \\
-$\sigma_{0,\text{exp}}$ & 193 & 1.0 & --- & --- & --- & --- \\
+VLC & 342 & 1.78 & $-6.92$ & 0.53 & 0.396 & 63.1 \\
+Labusch, calibrated & 206 & 1.07 & 0.14 & 0.55 & 0.469 & 59.1 \\
+Toda--Caraballo, calibrated & 274 & 1.42 & $-3.18$ & 0.49 & 0.399 & 62.9 \\
+HP only & --- & --- & --- & --- & 0.406 & 62.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[htb]
+Table~\ref{tab:sssbenchmark} lists the benchmark, and Fig.~\ref{fig:sss} shows the parity plots. As standalone LOO predictors, the archived SSS scores are 0.274 for calibrated Labusch, 0.091 for Toda--Caraballo, and 0.030 for VLC. All three are below the Family~1 YS baseline. When raw composition is already included, adding one of these deterministic SSS estimates changes LOO $R^2$ by no more than 0.002. The reported linear partial correlations after removing the composition signal are also below $|r|=0.10$. These results show that the estimates add little information in this dataset. They do not invalidate the underlying theories outside the present input approximations.
+
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{fig_sss_parity.png}
-  \caption{Parity plot of the three SSS predictions vs.\ the Hall--Petch-corrected experimental friction stress.}
+  \includegraphics[width=0.72\textwidth]{fig_sss_parity.png}
+  \caption{Family~2 SSS estimates versus Family~1 Hall--Petch-corrected YS.}
   \label{fig:sss}
 \end{figure}
 
-The roots of the failure are both methodological and fundamental: Vegard's-law volumes linearly extrapolate lattice parameters from pure-element FCC structures that V and Al do not adopt, producing sign-dependent errors (underprediction near equimolar, 4--5$\times$ overprediction for V/Al-rich) that no rescaling can fix. VLC with DFT-derived misfit volumes achieves quantitative accuracy for equimolar FCC HEAs~\cite{Varvenne2016,Moitzi2022}, and with experimentally measured misfits and elastic constants it rationalizes nanoindentation hardness across 24 single-phase FCC Co-Cr-Fe-Mn-Ni alloys~\cite{Bracq2019}, so it is the input approximation, not the theory, that fails; physics-based models may retain value for extrapolation where data-driven models lose validity~\cite{Khatamsaz2023}.
+The present data cannot show that the error comes only from the Vegard inputs. Approximated elastic properties, calibration transfer, phase or local-order effects, and the subtraction used to define experimental friction stress can all contribute. DFT-derived misfit volumes improve VLC predictions in selected FCC systems~\cite{Moitzi2022}. Improved inputs are therefore a clear next test, not a proven single explanation.
 
-\section{Grain-size scaling laws: full results}
-\label{si:scaling}
+\subsection{Fold-contained PCA}
 
-Table~\ref{tab:scaling} reports the frequentist comparison of the nine scaling laws for YS, Table~\ref{tab:bayesian_scaling} the Bayesian PSIS-LOO comparison, Table~\ref{tab:within_alloy_scaling} the within-replicate fits, and Table~\ref{tab:hv_scaling} the HV comparison. The Hall--Petch posterior yields $\sigma_0 = 92 \pm 22$~\si{MPa} and (grain-only) $k_\text{HP} = 1149 \pm 140$~MPa$\cdot\mu$m$^{1/2}$; this inflated slope arises because the global grain-only regression conflates composition effects with the HP slope (V-rich alloys are systematically stronger and finer-grained, $r(V, d) = -0.24$). Allowing $\sigma_0$ to depend on composition (M3) collapses the slope to $k_\text{HP} = 766$~MPa$\cdot\mu$m$^{1/2}$, within the FCC-HEA literature range. The free-exponent posterior is $n = 0.53 \pm 0.16$ (94\% HDI $[0.22, 0.82]$, $P(0.4 < n < 0.6) = 0.43$); the 94\% credible band of the model-averaged prediction ($\pm{\sim}30$~\si{MPa}) is far narrower than the data scatter ($\pm{\sim}150$~\si{MPa}), making the dominance of composition-driven variance directly visible (Figs.~\ref{fig:scaling_fits}--\ref{fig:bayesian_bma}). The best-leveraged replicate group (Co-Cr-Fe-Mn-Ni-V, $n = 3$, $d = 23$--$188$~\si{\micro\meter}) yields $k_\text{local} = 731$~MPa$\cdot\mu$m$^{1/2}$ with within-group $R^2 = 0.995$, consistent with the global M3 value.
+The earlier Family~2 PCA result fit StandardScaler and PCA on all 93 records before CV (Table~\ref{tab:pca}). In the revised calculation, both transformations are fit within every training fold. The model uses 11 inputs: six Wen descriptors, $d^{-1/2}$, $\mathrm{SD}_{\mathrm{grain}}$, cold work, recrystallization temperature, and hold time.
 
-\begin{table}[htb]
+\begin{table}[H]
 \centering
-\caption{Comparison of grain-size scaling laws for YS: $\sigma_y = \sigma_0 + k\,f(d)$, ranked by BIC.}
-\label{tab:scaling}
-\small
-\begin{tabular}{lcccccc}
+\caption{Family~2 PCA-OLS before and after correcting preprocessing leakage.}
+\label{tab:pca}
+\begin{tabular}{lrrr}
 \toprule
-Scaling law $f(d)$ & $k$ & Train $R^2$ & LOO $R^2$ & LOO RMSE & BIC & $\Delta$BIC \\
+Implementation & 5-fold $R^2$ & LOO $R^2$ & LOBO $R^2$ \\
 \midrule
-$d^{-1/2}$ [Hall--Petch] & 2 & 0.429 & 0.406 & 62.5 & 774.5 & 0.0 \\
-$\ln(d)/d$ & 2 & 0.429 & 0.406 & 62.5 & 774.5 & 0.0 \\
-$d^{-2/3}$ & 2 & 0.429 & 0.405 & 62.6 & 774.6 & 0.1 \\
-$d^{-1/3}$ [Baldwin] & 2 & 0.427 & 0.403 & 62.6 & 774.9 & 0.4 \\
-$d^{-1}$ [Dunstan--Bushby] & 2 & 0.419 & 0.395 & 63.1 & 776.1 & 1.6 \\
-$\ln(d)$ & 2 & 0.413 & 0.388 & 63.4 & 777.2 & 2.7 \\
-$d^{-0.548}$ [Optimized] & 3 & 0.430 & 0.406 & 62.5 & 779.0 & 4.5 \\
-$1/\sqrt{d} + 1/d$ [Composite] & 3 & 0.430 & 0.395 & 63.1 & 779.0 & 4.5 \\
-$d^{-1} + d^{-2}$ [Taylor] & 3 & 0.429 & 0.387 & 63.5 & 779.1 & 4.6 \\
+Global scaling/PCA & 0.525 & 0.516 & 0.441 \\
+Fold-contained scaling/PCA & 0.462 & 0.480 & 0.362 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htb]
+PCA loadings from the full dataset remain descriptive only. The back-projected coefficients depend on feature scaling and are not interpreted as causal feature importance. The global-preprocessing implementation is retained only to document leakage and is not used for the revised comparison.
+
+\section{Family 3: \familythree}
+\label{si:composition}
+
+Family~3 contains the OLS and M-model Hall--Petch hierarchy. These models add raw composition, recorded processing, and selected microstructure terms to the Family~1 baseline. M3 uses a shared $k_{\mathrm{HP}}$ while allowing the intercept to depend on composition. M15 extends M3 with additive $\mathrm{SD}_{\mathrm{grain}}$ and the interaction $\mathrm{SD}_{\mathrm{grain}}d^{-1/2}$. Their coefficients are empirical within the sampled campaigns and are not elemental SSS constants.
+
+M3 gives LOO/LOBO $R^2=0.652/0.625$. The modest change from LOO to LOBO supports transfer among the six sampled iterations. Because LOO can retain a repeated composition, we do not use it to claim strict prediction of unseen compositions.
+
+Table~\ref{tab:sdgrain} separates the value of measuring grain-distribution width from the value of its interaction with the Hall--Petch term. Adding $\mathrm{SD}_{\mathrm{grain}}$ only as an independent term improves LOO but lowers LOBO. M15 improves both and is the strongest verified low-complexity YS model when distribution width is available. The interaction coefficient is 19.16 in the fitted numerical units, with $t=4.71$ and $p=1.0\times10^{-5}$. Relative to M3, M15 lowers BIC by 20.1. These are reproducible OLS results, but they do not identify a causal grain-width mechanism because $d$, $\mathrm{SD}_{\mathrm{grain}}$, composition, and processing are correlated.
+
+\begin{table}[H]
 \centering
-\caption{Bayesian comparison via PSIS-LOO (YS). Stacking weights optimized for out-of-sample prediction.}
-\label{tab:bayesian_scaling}
+\caption{Verified Family~3 grain-width controls. Values are pooled out-of-fold $R^2$.}
+\label{tab:sdgrain}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lrrrr}
 \toprule
-Model & elpd$_\text{loo}$ & $\Delta$LOO & $p_\text{loo}$ & Weight \\
+Model & Parameters & 5-fold & LOO & LOBO \\
 \midrule
-Hall--Petch $d^{-1/2}$              & $-518.5$ & 0.0 & 4.2 & 1.000 \\
-Composite $d^{-1/2}\!+\!d^{-1}$     & $-518.5$ & 0.1 & 4.2 & 0.000 \\
-Critical thickness $\ln(d)/d$       & $-518.5$ & 0.1 & 4.3 & 0.000 \\
-Intermediate $d^{-2/3}$              & $-518.7$ & 0.2 & 4.4 & 0.000 \\
-Baldwin $d^{-1/3}$                  & $-518.7$ & 0.2 & 4.2 & 0.000 \\
-Optimized exponent $d^{-n}$         & $-518.8$ & 0.3 & 4.5 & 0.000 \\
-Logarithmic $\ln(d)$                & $-519.7$ & 1.2 & 3.9 & 0.000 \\
-Dunstan--Bushby $d^{-1}$            & $-520.3$ & 1.8 & 4.3 & 0.000 \\
+M3 & 9 & 0.666 & 0.652 & 0.625 \\
+M3 $+$ additive $\mathrm{SD}_{\mathrm{grain}}$ & 10 & 0.659 & 0.668 & 0.595 \\
+M15 $+$ SD--HP interaction & 11 & 0.731 & 0.694 & 0.694 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htb]
+\begin{table}[H]
 \centering
-\caption{Within-alloy scaling-law fits on the 9 multi-replicate composition groups (21 alloys).}
-\label{tab:within_alloy_scaling}
-\small
-\begin{tabular}{lcc}
+\caption{Family~3 M3 coefficients relative to Ni.}
+\label{tab:m3}
+\begin{tabular}{lrrr}
 \toprule
-Scaling law & Pooled within-group $R^2$ & $R^2$ ($n{=}3$ group) \\
+Parameter & Estimate (MPa) & 95\% low & 95\% high \\
 \midrule
-$d^{-1/2}$ [Hall--Petch]   & 0.778 & 0.995 \\
-$d^{-1/3}$ [Baldwin]       & 0.781 & 0.997 \\
-$d^{-2/3}$                 & 0.775 & 0.993 \\
-$d^{-1}$ [Dunstan--Bushby] & 0.769 & 0.987 \\
-$\ln(d)/d$ [crit.\ thick.] & 0.776 & 0.993 \\
-$\ln d$                    & 0.786 & 0.999 \\
+Intercept & 229.6 & 152.4 & 306.7 \\
+Al & $-201.3$ & $-955.4$ & 552.8 \\
+Co & $-187.2$ & $-268.1$ & $-106.3$ \\
+Cr & $-307.7$ & $-588.5$ & $-26.9$ \\
+Cu & $-334.0$ & $-651.9$ & $-16.2$ \\
+Fe & $-360.4$ & $-520.1$ & $-200.6$ \\
+Mn & 82.3 & $-117.6$ & 282.2 \\
+V & 291.3 & 41.0 & 541.5 \\
+$k_{\mathrm{HP}}$ & 765.8 & 501.5 & 1030.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[htb]
+The fitted M3 coefficients are listed in Table~\ref{tab:m3}, and literature Hall--Petch slopes for comparison in Table~\ref{tab:khplit}. Al has a much wider interval than the named stable coefficients because it spans only 0--4~at.\%. We therefore avoid stating that every M3 coefficient changes by less than $\pm15\%$ under grain-size perturbation. That diagnostic applies specifically to V, Co, Cr, and Fe. In 1000 grain-size perturbations, the V, Co, Cr, and Fe coefficients changed by less than approximately 15\%, while $k_{\mathrm{HP}}$ changed by approximately 39\%. A 10,000-replicate row bootstrap gave standard-error ratios of 0.99--1.54 relative to OLS. These checks support numerical stability within the sampled records. However, the row bootstrap does not reproduce campaign-level sampling and does not guarantee transfer.
+
+\begin{table}[H]
 \centering
-\caption{Grain-size scaling laws fit to HV, ranked by $\Delta$BIC.}
-\label{tab:hv_scaling}
+\caption{Literature context for the fitted constant Hall--Petch slope. The table includes only the directly cited FCC entries retained from the source supplement.}
+\label{tab:khplit}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lrl}
 \toprule
-Scaling law $f(d)$ & $k$ & Train $R^2$ & LOO $R^2$ & $\Delta$BIC \\
+Alloy & $k_{\mathrm{HP}}$ (MPa$\cdot\mu$m$^{1/2}$) & Source \\
 \midrule
-$d^{-1.728}$ [Optimized]   & 3 & 0.193 & 0.166 & 0.0 \\
-$d^{-1}$ [Dunstan--Bushby] & 2 & 0.185 & 0.154 & 0.9 \\
-$d^{-2/3}$                 & 2 & 0.175 & 0.143 & 2.1 \\
-$\ln(d)/d$                 & 2 & 0.174 & 0.141 & 2.3 \\
-$d^{-1/2}$ [Hall--Petch]   & 2 & 0.169 & 0.136 & 2.8 \\
-$d^{-1/3}$ [Baldwin]       & 2 & 0.161 & 0.128 & 3.7 \\
-$1/\sqrt{d} + 1/d$         & 3 & 0.192 & 0.151 & 4.7 \\
-$\ln(d)$                   & 2 & 0.144 & 0.110 & 5.6 \\
+Pure Cu & 110 & Cordero et al.~\cite{Cordero2016} \\
+Pure Ni & 160 & Cordero et al.~\cite{Cordero2016} \\
+CoCrNi & 265 & Yoshida et al.~\cite{Yoshida2017} \\
+CoCrFeMnNi & 494 & Otto et al.~\cite{Otto2013} \\
+CoCrFeNi & 516 & Yoshida et al.~\cite{Yoshida2019acta} \\
+This work, Family~3 M3 & 766 & shared fitted slope \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=0.55\textwidth]{fig_scaling_fits.png}
-  \caption{The top four YS scaling laws overlap visibly across the full $d$ range.}
-  \label{fig:scaling_fits}
-\end{figure}
+The grain-only Family~1 slope is approximately 1149~MPa$\cdot\mu$m$^{1/2}$. Adding the composition-dependent intercept in M3 reduces the shared slope to approximately 766~MPa$\cdot\mu$m$^{1/2}$. This change is consistent with composition--grain-size confounding in the global baseline. It does not show that 766 is a universal slope for FCC MPEAs.
 
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=0.55\textwidth]{fig_scaling_deltabic.png}
-  \caption{$\Delta$BIC for the nine candidate scaling laws relative to Hall--Petch (YS).}
-  \label{fig:scaling_deltabic}
-\end{figure}
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=0.55\textwidth]{fig_bayesian_n.png}
-  \caption{Marginal posterior of the grain-size exponent in $\sigma_y = \sigma_0 + k\,d^{-n}$; the dashed line marks $n = 0.5$.}
-  \label{fig:bayesian_exponent}
-\end{figure}
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=0.55\textwidth]{fig_bayesian_bma.png}
-  \caption{Bayesian model-averaged prediction with 94\% credible band versus the observed alloys.}
-  \label{fig:bayesian_bma}
-\end{figure}
-
-\section{Legacy 17-model panel, feature sets, and SHAP analysis}
-\label{si:mlpanel}
-
-The legacy panel predates the equal-footing protocols of the main text and is retained because it measures the validation failure mode at full strength. It spans 17 models across six families (linear, kernel, tree, compact boosting, physics-informed, ensemble) on six hierarchical feature sets: CORE (12: element fractions $+$ $d^{-1/2}$ $+$ processing), PHYSICS (27: $+$15 descriptors), PHYSICS\_ALT (33: $+$alternative grain-size features), INTERACTIONS (46: $+$11 cross-terms), INTERACTIONS\_ALT (64: $+$element$\times d^{-1}$ and SSS$\times$grain products), and COMPACT (top-20 by mutual information). Tuned models used Optuna with 50 Bayesian trials on the full dataset prior to LOO---the optimism this induces is quantified here and eliminated in the ARMOTE-CV and fair-comparison panels of the main text. Table~\ref{tab:models} shows the ranking.
-
-\begin{table}[htb]
+\begin{table}[H]
 \centering
-\caption{Legacy panel ranked by LOO $R^2$ (models with $R^2 < 0$ omitted). INT\_ALT $=$ INTERACTIONS\_ALT.}
-\label{tab:models}
+\caption{Family~3 M3 per-batch LOBO performance and composition-hull containment. The aggregate LOBO value in the main text is pooled; it is not the mean of these $R^2$ values.}
+\label{tab:batch}
 \small
-\begin{tabular}{llrrrrrr}
+\begin{tabular}{lrrrrr}
 \toprule
-Model & Features & $n_f$ & LOO $R^2$ & RMSE & LOBO $R^2$ & $k_\text{eff}$ & BIC \\
+Batch & $n$ & Hull & F1 HP $R^2$ & F3 M3 $R^2$ & M3 RMSE \\
 \midrule
-XGBoost & INT\_ALT & 64 & 0.729 & 42.2 & 0.574 & 3749 & 16889 \\
-Average Ensemble & meta & 5 & 0.700 & 44.4 & --- & 5 & 728 \\
-Stacking (Ridge) & meta & 5 & 0.698 & 44.6 & 0.707 & 6 & 717 \\
-Random Forest & INT\_ALT & 64 & 0.675 & 46.3 & 0.623 & 320 & 2046 \\
-LightGBM & INT\_ALT & 64 & 0.673 & 46.4 & 0.625 & 320 & 1935 \\
-SVR (RBF) & COMPACT & 20 & 0.654 & 47.7 & 0.497 & 83 & 1062 \\
-M3: $\sigma_0$(all) & HP\_PHYS & 9 & 0.652 & 47.8 & 0.625 & 10 & 743 \\
-XGBoost-compact & COMPACT & 20 & 0.650 & 48.0 & 0.580 & 1484 & 7259 \\
-Ridge & PHYS\_ALT & 33 & 0.638 & 48.8 & 0.651 & 34 & 847 \\
-ElasticNet & PHYS\_ALT & 33 & 0.637 & 48.9 & 0.648 & 32 & 839 \\
-CatBoost & INT\_ALT & 64 & 0.637 & 48.9 & 0.515 & 600 & 2845 \\
+BBA & 17 & 0.882 & 0.412 & 0.697 & 32.9 \\
+BBB & 9 & 0.556 & 0.138 & 0.306 & 57.7 \\
+BBC & 8 & 0.750 & 0.259 & 0.656 & 51.9 \\
+CBA & 23 & 1.000 & 0.295 & 0.423 & 44.9 \\
+CBB & 15 & 0.933 & 0.174 & 0.584 & 49.6 \\
+CBC & 21 & 0.476 & $-0.038$ & 0.409 & 60.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Three caveats attach to this panel. The stacking ensemble's apparent negative LOO--LOBO gap (0.698 vs.\ 0.707) reflects mild leakage: its meta-features are LOO predictions from base models that saw other members of each held-out batch during training. XGBoost's LOO--LOBO gap of 0.155 indicates that roughly 21\% of its explained variance derives from batch-specific patterns. BIC comparisons across families are approximate because $k_\text{eff}$ estimation differs (regression parameters vs.\ total leaves vs.\ $n$ for interpolating kernels).
+\section{Family 4: \familyfour}
+\label{si:ml}
 
-SHAP analysis of the best XGBoost model (Fig.~\ref{fig:shap}) ranks $\Omega$ first, followed by the interaction features Mn$\times d^{-1}$ and V$\times d^{-1}$, alternative grain-size features, and the SSS descriptors. The dominance of element$\times d^{-1}$ over element$\times d^{-1/2}$ terms is geometric: tree models partition feature space through axis-aligned splits, and the $d^{-1}$ transformation stretches the fine-grained regime where strengthening effects are largest, enabling more informative splits; in linear models the two transformations are near-collinear and interchangeable. As established in the main text, these interaction features act as flexible proxies for the composition-dependent $\sigma_0$, not as evidence of a composition-dependent slope.
+The equal-footing panel gives every estimator the same S1--S4 input matrices and fixed splits. S1 contains both $d^{-1/2}$ and $\mathrm{SD}_{\mathrm{grain}}$, unlike the Family~1 classical baseline, which contains only $d^{-1/2}$. For YS, an S1 linear model gives LOO/LOBO $R^2=0.451/0.394$, compared with $0.406/0.373$ for Family~1. The larger M15 gain therefore comes from the interaction, not simply from adding the SD feature. At S2, the Lasso linear control and LightGBM have similar LOBO values of 0.621 and 0.615. For HV, adding SD linearly changes LOO/LOBO from $0.136/-0.077$ to $0.232/-0.176$, while LightGBM S1 gives $0.323/0.112$. Thus the LightGBM-to-classical comparison changes both features and estimator. Descriptor-rich input sets are generally negative under LOBO. These are comparisons within a shared Family~4 panel; they do not imply that every repository analysis uses identical inputs.
 
-\begin{figure}[htb]
+The primary audit in the main paper uses declared, fixed settings with no data-driven hyperparameter selection. Lasso uses $\alpha=1.0$. LightGBM uses 400 estimators, a maximum depth of 3, a learning rate of 0.05, and a feature fraction of 0.8. These settings were chosen for this study and are not library defaults. The batch-bootstrap LOBO intervals overlap for YS Lasso ($[0.516,0.664]$) and LightGBM ($[0.474,0.664]$). This overlap does not establish equivalence, but it provides no evidence that non-linearity improves the matched S2 comparison.
+
+The archived nested ARMOTE-CV summary reports YS Bayesian ridge at S2 with $R^2=0.685$ under 5-fold CV, 0.666 under LOO, and 0.613 under LOBO. Its generator and raw fold objects are not in the repository. The available \texttt{armote\_ladder\_cv.py} script tunes once on the full dataset and then evaluates the selected settings. It therefore does not verify the archived nested implementation. We retain the archived Family~4 summary as secondary evidence until the fold records are released.
+
+\subsection{Legacy 17-model panel and SHAP audit}
+
+The legacy 17-model panel tuned selected models on the full dataset before LOO. It also gave the tree models up to 64 interaction features. Its XGBoost scores, 0.729 under LOO and 0.574 under LOBO, are therefore not confirmatory. The 0.155 difference is a validation gap; it does not prove that batch patterns cause 21\% of the explained variance. Table~\ref{tab:legacy} is retained for provenance. It should not be compared numerically with the fixed-setting primary panel as though both used the same selection protocol.
+
+\begin{table}[H]
+\centering
+\caption{Archived legacy panel ranked by LOO $R^2$. INT-ALT is a 64-feature interaction matrix, and COMPACT is a 20-feature matrix selected using the full dataset. Effective parameter counts and BIC are omitted because their definitions differed across estimator classes.}
+\label{tab:legacy}
+\small
+\begin{tabular}{llrrr}
+\toprule
+Model & Features & $p$ & LOO $R^2$ & LOBO $R^2$ \\
+\midrule
+XGBoost & INT-ALT & 64 & 0.729 & 0.574 \\
+Average ensemble & meta & 5 & 0.700 & --- \\
+Stacking (Ridge) & meta & 5 & 0.698 & 0.707 \\
+Random forest & INT-ALT & 64 & 0.675 & 0.623 \\
+LightGBM & INT-ALT & 64 & 0.673 & 0.625 \\
+SVR (RBF) & COMPACT & 20 & 0.654 & 0.497 \\
+Family~3 M3 & HP-PHYS & 9 & 0.652 & 0.625 \\
+XGBoost compact & COMPACT & 20 & 0.650 & 0.580 \\
+Ridge & PHYS-ALT & 33 & 0.638 & 0.651 \\
+ElasticNet & PHYS-ALT & 33 & 0.637 & 0.648 \\
+CatBoost & INT-ALT & 64 & 0.637 & 0.515 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The stacking result has an additional leakage risk. Its meta-features are LOO predictions from base models that retained other records from the held-out batch. In the legacy XGBoost model, SHAP ranks $\Omega$, Mn$\times d^{-1}$, V$\times d^{-1}$, alternative grain-size transforms, and SSS descriptors highly (Fig.~\ref{fig:shap}). These attributions describe the archived fitted model. Because the features are correlated and include constructed interactions, the SHAP values cannot identify independent physical mechanisms or a composition-dependent Hall--Petch slope.
+
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{fig07_shap_summary.png}
-  \caption{SHAP summary for the legacy XGBoost model (top 20 features by mean $|\text{SHAP}|$).}
+  \includegraphics[width=0.68\textwidth]{fig07_shap_summary.png}
+  \caption{SHAP summary for the archived XGBoost model. The values explain this predictor, which was tuned using the full dataset; they are not causal feature effects.}
   \label{fig:shap}
 \end{figure}
 
-\section{Symbolic regression: search details and expanded controls}
+\section{Family 5: \familyfive}
 \label{si:sr}
 
-\subsection{SISSO configuration}
-The SISSO input space contains 27 features: Oliynyk-style statistics (mean, variance, delta, range) of atomic radii, shear modulus, electronegativity, and melting point~\cite{Oliynyk2016}; HEA thermodynamic descriptors; the SSS parameters $\Phi_\text{VLC}$, $\varepsilon_L$, $\sigma_\text{TC}$; and $d^{-1/2}$. Two tiers of algebraic expansion ($+,-,\times,\div$) precede $\ell_0$-regularized selection at dimension $D = 3$ (four effective parameters). The robust variant was obtained by excluding $\delta_\mu$ from the pool; three independent searches (varying which delta-type features are excluded) converge to the same equation. In the $\text{SD}_\text{grain}$-augmented runs the pool additionally contains $\text{SD}_\text{grain}$ and the processing variables.
+\subsection{SISSO configuration and expanded controls}
 
-\subsection{Expanded-search controls}
-SISSO v2 adds unary operators ($x^2$, $\sqrt{x}$, $x^{-1}$), raises the SIS threshold to 30, adds nine alternative grain-size features ($d^{-\alpha}$ for eight exponents plus $\ln d$), and selects $D \in \{1,\ldots,4\}$ by BIC. Despite the larger space (36 primary features, 3293 after expansion), SISSO v2 achieves lower LOO $R^2 = 0.604$ and LOBO $R^2 = 0.350$: different folds select different grain-size features, degrading cross-validated performance. At dimension 1 the best single feature is $d^{-0.45}/\Omega$; higher dimensions prefer $\ln d$---consistent with the BIC-indistinguishable scaling laws of Section~\ref{si:scaling}. Constraining the search to $d^{-1/2}$ stabilizes model selection across folds and yields superior generalization: in small-sample symbolic regression the right inductive bias outweighs a broader search. EML universal-operator regression ($\texttt{eml}(x,y) = e^x - \ln y$)~\cite{Odrzywolek2025} reaches only LOO $R^2 = 0.321$ at depth 1 (20 effective parameters) and overfits catastrophically at greater depth. The recalibrated pure-metal Hall--Petch model of Jiang et al.~\cite{Jiang2022HP} reaches LOO $R^2 = 0.346$, below the grain-only baseline: its rule-of-mixtures descriptors ($\bar{W}$ varies by only $\pm 12\%$, $\bar{\alpha}$ by $\pm 8\%$, $\bar{\gamma}_\text{GB}$ by $\pm 9\%$ across the panel) cannot discriminate alloys within the narrow Ni-rich window, whereas the variance descriptors SISSO selects vary 15--30-fold.
+The archived SISSO input space contains 27 primary features. These include composition-weighted statistics of atomic radius, shear modulus, electronegativity, and melting point; thermodynamic descriptors; three SSS-related quantities; and $d^{-1/2}$~\cite{Oliynyk2016,Ouyang2018SISSO}. Two algebraic expansion tiers using $+,-,\times,$ and $\div$ are followed by sparse selection at descriptor dimension $D=3$. The ``SISSO Full'' expression was selected from this space. The ``SISSO Robust'' control removes the small-denominator $\delta_\mu$ term before the search. Here, ``Robust'' means numerically bounded over the audited domain, not validated transfer.
 
-\subsection{PySR grid summary}
-Table~\ref{tab:pysr_grid} reports the elbow-selected equations across the full feature $\times$ operator grid with external validation.
+An expanded archived search added $x^2$, $\sqrt{x}$, and $x^{-1}$, nine alternative grain-size transforms, a larger screening threshold, and BIC selection over $D=1,\ldots,4$. Its reported LOO/LOBO $R^2=0.604/0.350$ was lower than the constrained-search result because the selected transforms changed across folds. An EML universal-operator control~\cite{Odrzywolek2025} gave LOO $R^2=0.321$ at depth one and became unstable at greater depth. A recalibrated pure-metal descriptor relation~\cite{Jiang2022HP} gave LOO $R^2=0.346$. These controls support the hypothesis that a useful inductive bias can help. However, the archived records do not show that every structure-selection decision was nested within each outer split.
 
-\begin{table}[htb]
+\subsection{PySR search grid}
+
+PySR used three feature pools, renamed P1--P3 here to avoid confusion with the five Family labels. P1 contains $d^{-1/2}$ and $\mathrm{SD}_{\mathrm{grain}}$. P2 adds raw composition and processing. P3 instead adds six Wen descriptors and processing. The archived files call these pools F1--F2. The operator sets were O1 ($+,-$), O2 ($+,-,\times,\div$), and O3 (O2 plus protected square root, logarithm, square, and cube). Each cell used 50--75 search iterations. Equation structures and elbow or accuracy selections were obtained using the complete target dataset.
+
+The full PySR grid is given in Table~\ref{tab:pysrgrid} and its complexity--loss front in Fig.~\ref{fig:pysrpareto}. For CV, the numerical constants in the selected full-data expression were replaced with free parameters and refit in each training fold. This tests a frozen structure after it has been selected; it does not repeat the structure search. The stored LOBO values in Table~\ref{tab:pysr} are averages of per-batch $R^2$. In contrast, the confirmatory values in the main text are pooled $Q^2$. We report the stored values for provenance but do not place them on the same leaderboard.
+
+\begin{table}[H]
 \centering
-\caption{PySR grid (elbow selections) with external validation. Const $=$ fitted constants; Ext $=$ external RMSE (MPa for YS, HV units for HV); Safe $=$ singularity-audit outcome.}
-\label{tab:pysr_grid}
-\small
-\begin{tabular}{llcccccc}
+\caption{Archived PySR grid selected at the elbow. Stored LOBO uses the archived fold aggregation. Ext. is RMSE on the heterogeneous E1--E3 literature stress set, and Safe records the archived singularity audit. P1--P3 are feature pools within Family~5.}
+\label{tab:pysrgrid}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{llrrrrrr}
 \toprule
-Target & Cell & Const & LOO $R^2$ & LOBO $R^2$ & BIC & Ext & Safe \\
+Target & Cell & Const. & LOO $R^2$ & Stored LOBO & BIC & Ext. RMSE & Safe \\
 \midrule
-YS & F1$\cdot$O1 & 1 & 0.019 & $-0.251$ & 818 & 112 & yes \\
-YS & F1$\cdot$O2 & 2 & 0.482 & 0.276 & 761 & 168 & yes \\
-YS & F1$\cdot$O3 & 1 & 0.399 & 0.205 & 773 & 158 & yes \\
-YS & F2$\cdot$O2 & 2 & 0.605 & 0.475 & 737 & 114 & yes \\
-YS & F2$\cdot$O3 & 2 & 0.604 & 0.496 & 737 & 108 & yes \\
-YS & F3$\cdot$O1 & 1 & 0.290 & 0.068 & 788 & 117 & yes \\
-YS & F3$\cdot$O2 & 2 & 0.632 & 0.500 & 727 & 133 & yes \\
-YS & F3$\cdot$O3 & 2 & 0.674 & 0.555 & 716 & 128 & yes \\
+YS & P1--O1 & 1 & 0.019 & $-0.251$ & 818 & 112 & yes \\
+YS & P1--O2 & 2 & 0.482 & 0.276 & 761 & 168 & yes \\
+YS & P1--O3 & 1 & 0.399 & 0.205 & 773 & 158 & yes \\
+YS & P2--O2 & 2 & 0.605 & 0.475 & 737 & 114 & yes \\
+YS & P2--O3 & 2 & 0.604 & 0.496 & 737 & 108 & yes \\
+YS & P3--O1 & 1 & 0.290 & 0.068 & 788 & 117 & yes \\
+YS & P3--O2 & 2 & 0.632 & 0.500 & 727 & 133 & yes \\
+YS & P3--O3 & 2 & 0.674 & 0.555 & 716 & 128 & yes \\
 \midrule
-HV & F1$\cdot$O1 & 1 & $-0.018$ & $-4.16$ & 664 & 32 & yes \\
-HV & F1$\cdot$O3 & 3 & 0.579 & $-1.15$ & 587 & 9944 & no \\
-HV & F2$\cdot$O2 & 3 & 0.568 & $-1.23$ & 587 & 97 & yes \\
-HV & F2$\cdot$O3 & 4 & 0.678 & $-0.48$ & 562 & 17895 & no \\
-HV & F3$\cdot$O2 & 3 & 0.631 & $-0.87$ & 570 & 75 & yes \\
-HV & F3$\cdot$O3 & 4 & 0.681 & $-2.79$ & 561 & 51 & yes \\
+HV & P1--O1 & 1 & $-0.018$ & $-4.16$ & 664 & 32 & yes \\
+HV & P1--O3 & 3 & 0.579 & $-1.15$ & 587 & 9944 & no \\
+HV & P2--O2 & 3 & 0.568 & $-1.23$ & 587 & 97 & yes \\
+HV & P2--O3 & 4 & 0.678 & $-0.48$ & 562 & 17895 & no \\
+HV & P3--O2 & 3 & 0.631 & $-0.87$ & 570 & 75 & yes \\
+HV & P3--O3 & 4 & 0.681 & $-2.79$ & 561 & 51 & yes \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Hardness--yield correspondence: Tabor derivation, external source grades, and rank analysis}
-\label{si:hardness}
+\begin{table}[H]
+\centering
+\caption{Selected PySR YS equations. CV values are post-selection fixed-form scores. Stored LOBO is the mean of the fold-wise $R^2$ values. Every external $R^2$ is negative.}
+\label{tab:pysr}
+\small
+\begin{tabular}{llrrrr}
+\toprule
+Cell & Selection & LOO $R^2$ & Stored LOBO & Ext. RMSE & Ext. $R^2$ \\
+\midrule
+P2--O2 & accuracy & 0.808 & 0.696 & 129.4 & $-0.496$ \\
+P2--O3 & accuracy & 0.808 & 0.689 & 111.9 & $-0.119$ \\
+P3--O3 & accuracy & 0.765 & 0.668 & 120.4 & $-0.295$ \\
+P3--O3 & elbow & 0.674 & 0.555 & 128.4 & $-0.474$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Tabor framework}
-The classical Tabor result $H_V \approx 3\sigma_y$~\cite{Tabor1951} applies to a rigid--perfectly-plastic medium; real metals strain harden, so the correct generalization is $H_V \approx 3\,\sigma_f(\varepsilon_r)$ with representative strain $\varepsilon_r \approx 0.08$ for Vickers geometry~\cite{Dao2001}. Defining $C_\text{eff} \equiv H_V/\sigma_y$ gives $C_\text{eff} = 3\,\sigma_f(\varepsilon_r)/\sigma_y$; for power-law hardening with the 0.2\% offset yield,
-\begin{equation}
-C_\text{eff} = 3 \cdot 40^{\,n}, \qquad n_\text{eff} = \frac{\ln(C_\text{eff}/3)}{\ln 40}.
-\label{eq:neff}
-\end{equation}
-Johnson's cavity-expansion correction~\cite{Johnson1970} is below 5\% for our alloys ($E/\sigma_y > 200$) and is neglected. The dataset gives $C_\text{eff} = 5.13 \pm 1.36$ ($p \approx 10^{-26}$ against $C = 3$), hence $n_\text{eff} = 0.15 \pm 0.07$, spanning near rigid--perfectly-plastic to strongly hardening behavior and lower than full-range Hollomon exponents for FCC HEAs ($n = 0.3$--$0.5$~\cite{Otto2013,Wu2014}), consistent with indentation sampling only the early post-yield regime. The strongest single correlates of $C_\text{eff}$ are V fraction ($r = -0.47$) and $d^{-1/2}$ ($r = -0.39$): V and grain refinement raise $\sigma_y$ without proportionally raising early flow stress.
-
-\subsection{External-validation source grades}
-The 82 external points vary in quality: Schneider et al.\ compression yield stresses and Citrine literature yield stresses are Grade~1; Otto et al.\ points derived from published Hall--Petch parameters are Grade~2; Huang et al.\ Vickers data converted via $C_\text{eff} = 5.13$ are Grade~3. A sensitivity analysis varying the conversion factor from 3.0 to 7.0 leaves the model ranking (M3 $<$ SISSO Robust $\ll$ SISSO Full in RMSE) unchanged. On the Mn-containing Huang alloys specifically, SISSO Robust stays within 85~\si{MPa} RMSE versus 620~\si{MPa} for SISSO Full.
-
-\subsection{HV as a ranking proxy: full analysis}
-The 93 alloys with both measurements show a Simpson's paradox (Fig.~\ref{fig:hv_rank}): global Spearman $\rho = 0.46$ (Kendall $\tau = 0.39$) against per-batch $\rho = 0.70$--$0.95$ (mean 0.87). The fixed-processing B-campaign pools at $\rho = 0.95$; the processing-swept C-campaign collapses to $\rho = 0.09$; restricting the C-campaign to a single recipe recovers $\rho = 0.84$. Stratifying by grain-size quartile does not restore coherence (per-quartile $\rho = 0.14$--$0.51$), and the Spearman partial correlation $\rho(\text{HV}, \text{YS} \mid d) = 0.24$ (rank-residual definition) is about half the marginal value: both HV and YS correlate with $d^{-1/2}$ through Hall--Petch ($r = +0.41$ and $+0.66$), so grain size is a confounder rather than the scrambler. Composition---V especially---is the primary axis along which the rankings diverge, captured by the fit
-\begin{equation}
-\log C_\text{eff} = 1.36 + 0.10\,\log d - 2.06\,x_V,
-\label{eq:ceff_fit}
-\end{equation}
-i.e.\ $C_\text{eff} \approx 3.9\,d^{+0.10}\exp(-2.06\,x_V)$: V depresses $C_\text{eff}$ by ${\sim}1.3\times$ per 10~at.\% because it raises $\sigma_y$ through $\sigma_0$ ($\alpha_V = +291$~\si{MPa}) without proportionally raising $\sigma_f(0.08)$. Top-of-distribution agreement follows the same pattern: 2 of the 5 hardest alloys are among the 5 strongest, rising to 8/10 and 11/20 at larger thresholds, with a mean rank discrepancy of 19.3 positions out of 93. Practical statement: HV ranks alloys reliably within a narrow composition window (any single BO iteration, or fixed-processing campaigns); cross-batch screening should measure $\sigma_y$ directly or correct for V content via Eq.~\ref{eq:ceff_fit}.
-
-\begin{figure}[htb]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{fig_hv_ys_rank.png}
-  \caption{HV rank versus YS rank across the 93 alloys, colored by batch. Per-batch correlations cluster along the diagonal ($\rho = 0.70$--$0.95$); the pooled ranking degrades to $\rho = 0.46$, with the processing-swept C-campaign at $\rho = 0.09$.}
-  \label{fig:hv_rank}
+  \includegraphics[width=0.68\textwidth]{fig08_pysr_pareto.png}
+  \caption{Archived PySR complexity--accuracy fronts. These descriptive plots show the complete-data search. Choosing an equation from them is part of the post-selection boundary.}
+  \label{fig:pysrpareto}
 \end{figure}
 
-\section{Model diagnostics and per-batch LOBO}
+PySR BIC counts the fitted numerical constants but not the many variables, operators, and structures that were attempted. We therefore do not compare it with the BIC of a pre-specified linear model set. During external evaluation, the protected functions are $\sqrt{|x|}$ and $\log(|x|+10^{-12})$. The printed equation must include these protections; otherwise the displayed and evaluated forms are different. Protection keeps a square root real but does not remove a pole when that root is in a denominator. The P3--O3 accuracy equation contains $\mathrm{SD}_{\mathrm{grain}}/\sqrt{|\Delta S_{\mathrm{mix}}-8.2739|}$. The internal minimum $\Delta S_{\mathrm{mix}}=8.3637$ is only 0.0898 above the singular value, so this expression must not be extrapolated without a stated descriptor-domain check.
+
+SISSO Full has the form
+\begin{equation}
+\sigma_y=120.5\frac{\sigma_r^2}{r_{\mathrm{range}}}
++9356\frac{d^{-1/2}}{\Delta S_{\mathrm{mix}}}
++1134\frac{\sigma_\chi^2}{\delta_\mu}-43.3.
+\end{equation}
+The $\delta_\mu$ denominator becomes small when the constituents have similar shear moduli. The aggregate external RMSE is \SI{420.6}{MPa}. The bounded SISSO Robust variant removes this ratio and gives \SI{162.9}{MPa}. This 61\% reduction in RMSE does not establish deployability because $R^2=-1.37$.
+
+\subsection{Corrected HV fixed form}
+
+The refit hardness form is summarized in Table~\ref{tab:hvfixed}. The previously printed equation had two coefficient signs opposite to those in the fitted model. When evaluated as printed, it gives full-data $R^2=-29.81$ and RMSE 185.4 HV. The corrected full-data fit is
+\begin{equation}
+H_V=222.306+84.479\frac{6.93-d}{\mathrm{SD}_{\mathrm{grain}}}
+-1.0046\frac{\Delta H_{\mathrm{mix}}}{t_{\mathrm{hold}}^2}.
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Performance of the corrected HV fixed form when its coefficients are refit within every fold.}
+\label{tab:hvfixed}
+\begin{tabular}{lrr}
+\toprule
+Protocol & $R^2$ & RMSE (HV) \\
+\midrule
+Full fit & 0.744 & 16.90 \\
+5-fold & 0.725 & 17.50 \\
+LOO & 0.727 & 17.46 \\
+LOBO & 0.636 & 20.16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A 10,000-resample bootstrap gives $c_0=221.82\pm9.64$, $c_1=84.12\pm7.34$, and $c_2=-1.006\pm0.106$ as the bootstrap mean $\pm$ SD. Here $c_0$ and $c_1$ have units of HV, and $c_2$ has units of HV$\cdot$h$^2\cdot$mol\,kJ$^{-1}$. The 95\% interval excludes zero for each coefficient. These intervals are conditional on the selected equation structure and therefore do not include structure-selection uncertainty.
+
+The fixed form predicts held-out batches within the combined program, but its structure was selected after the full-data search fronts were examined. Hold time is 0.5~h for every B-campaign record and is 1, 2, 4, or 8~h in Campaign C. It separates campaign with AUC $=1.000$, and $\Delta H_{\mathrm{mix}}/t_{\mathrm{hold}}^2$ gives AUC $=0.970$. No hold-time effect is identifiable within Campaign B. By comparison, the grain-width term $(6.93-d)/\mathrm{SD}_{\mathrm{grain}}$ gives AUC $=0.533$ and is nearly campaign-neutral. The hold-time term is therefore a campaign proxy in this dataset, whereas the grain-width term is a separate post-selected microstructure hypothesis. The equation is a prospective hypothesis, not yet a deployable hardness law.
+
+The zero at $d=\SI{6.93}{\micro\meter}$ is not a singularity. Singularities occur when $\mathrm{SD}_{\mathrm{grain}}=0$ or $t_{\mathrm{hold}}=0$. In the observed data, every $d$ exceeds \SI{14.66}{\micro\meter}, $\mathrm{SD}_{\mathrm{grain}}\geq\SI{8.32}{\micro\meter}$, and $t\geq\SI{0.5}{h}$. The audit script evaluates four registered equations over the observed and external values. It does not sweep every closed form over a multivariate convex hull.
+
+\section{Literature stress test by evidence class}
+\label{si:external}
+
+The literature table combines records with different target provenance. Class E1 contains 54 direct strength values: 48 records from the Borg/Citrine compilation~\cite{Borg2020} and six compression records for CrFeNi from Schneider and Laplanche~\cite{SchneiderCrFeNi2021}. These records represent only 18 exact compositions and mix sources and test modes. The legacy extraction restricted $d$ to 3--\SI{500}{\micro\meter}, removed YS values above \SI{800}{MPa}, and omitted one large-grain CrFeNi record because it departed from the expected Hall--Petch trend. Because these rules use outcome or relationship information, E1 is a heterogeneous stress test rather than an unbiased external benchmark.
+
+Class E2 contains three YS values reconstructed from published Hall--Petch fits~\cite{Otto2013}. Class E3 contains 25 YS proxies converted from HV~\cite{HuangTY2019} using $C_{\mathrm{eff}}$ inferred from the present dataset. E2 and E3 are therefore model-derived evidence, not independent measurements of the target. With only three values, the E2 $R^2$ entries in Table~\ref{tab:external} are descriptive and are not interpretable as generalization estimates. These evidence classes do not change the five model families, and they are never pooled to inflate the apparent number of direct external measurements.
+
+\begin{table}[H]
+\centering
+\caption{Literature stress-test metrics separated by evidence class. Negative $R^2$ on E1 means the model does not beat the E1 mean baseline.}
+\label{tab:external}
+\small
+\begin{tabular}{llrrr}
+\toprule
+Class & Model family and form & $n$ & $R^2$ & RMSE (MPa) \\
+\midrule
+E1 measured YS & F3 M3 & 54 & $-0.508$ & 149.5 \\
+E1 measured YS & F5 SISSO Robust & 54 & $-0.726$ & 160.0 \\
+E1 measured YS & F5 SISSO Full & 54 & $-5.084$ & 300.3 \\
+E2 HP-derived & F3 M3 & 3 & 0.677 & 49.0 \\
+E2 HP-derived & F5 SISSO Robust & 3 & 0.849 & 33.5 \\
+E3 HV-converted & F3 M3 & 25 & $-2.157$ & 96.9 \\
+E3 HV-converted & F5 SISSO Robust & 25 & $-9.642$ & 177.9 \\
+\midrule
+E1--E3 & F3 M3 & 82 & $-0.580$ & 132.9 \\
+E1--E3 & F5 SISSO Robust & 82 & $-1.373$ & 162.9 \\
+E1--E3 & F5 SISSO Full & 82 & $-14.813$ & 420.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The direct subset is the primary literature result, and no model beats its mean baseline. Aggregate RMSE values can compare numerical robustness on the same heterogeneous compilation. They cannot establish deployability or unbiased external accuracy. A future external benchmark should be defined before outcomes are inspected and should use consistent tensile definitions. It should also include complete metadata for composition, processing, phase, grain statistics, temperature, and test mode.
+
+\section{Hardness--yield correspondence}
+\label{si:tabor}
+
+Tabor's empirical Vickers relation is written as $H\simeq3\sigma_f(\varepsilon_r)$ with $\varepsilon_r\approx0.08$~\cite{Tabor1951}. Instrumented-indentation formulations, including that of Dao et al.~\cite{Dao2001}, use different definitions of representative strain. The value 0.08 is therefore not universal. With $C_{\mathrm{eff}}=H/\sigma_y$ and a Hollomon assumption between 0.2\% and 8\% strain,
+\begin{equation}
+n_{\mathrm{app}}=\frac{\ln(C_{\mathrm{eff}}/3)}{\ln(0.08/0.002)}
+=\frac{\ln(C_{\mathrm{eff}}/3)}{\ln 40}.
+\end{equation}
+The dataset gives $C_{\mathrm{eff}}=5.13\pm1.36$ and $n_{\mathrm{app}}\approx0.15\pm0.07$, where the latter uncertainty is propagated from the reported $C_{\mathrm{eff}}$ summary. Offset yield is not a measured flow stress at exactly 0.002 true plastic strain, and the calculation assumes Hollomon behavior. The result is therefore an apparent index rather than a measured tensile exponent.
+
+Global Spearman $\rho(\mathrm{HV},\mathrm{YS})=0.46$, while the per-batch values range from 0.70 to 0.95. The association becomes weaker but does not reverse. The revised paper therefore uses ``aggregation-induced attenuation'' rather than ``Simpson's paradox.'' The partial rank correlation after controlling for $d$ is 0.24. This single adjustment does not identify V, or any other composition variable, as a causal scrambler. We do not recommend the fitted V correction without prospective validation.
+
+The archived descriptive regression is
+\begin{equation}
+\log C_{\mathrm{eff}}=1.36+0.10\log d-2.06x_V,
+\end{equation}
+where $d$ is entered in the numerical units used for fitting. This regression describes an association in the present campaigns (Fig.~\ref{fig:hvrank}). It is neither dimensionally invariant nor mechanistically identified. Agreement at the top of the distribution also depends on the threshold. Two of the five hardest records are among the five strongest; the overlap increases to 8/10 and 11/20 for broader thresholds. These results support using HV for ranking only within a narrow composition window with similar processing.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.68\textwidth]{fig_hv_ys_rank.png}
+  \caption{HV rank versus YS rank by batch. Strong ordering within each batch becomes weaker after pooling because composition and processing coverage differ among batches.}
+  \label{fig:hvrank}
+\end{figure}
+
+\section{Reproducibility across model families}
 \label{si:diagnostics}
 
-\subsection{M3 robustness}
-A 1000-replicate Monte Carlo perturbation of grain sizes by their measured uncertainty shifts $\alpha_V$, $\alpha_\text{Co}$, $\alpha_\text{Cr}$, and $\alpha_\text{Fe}$ by less than $\pm 15\%$ and $k_\text{HP}$ by $\pm 39\%$. A 10\,000-replicate bootstrap yields parameter SE ratios of 0.99--1.54 (bootstrap/OLS), indicating modest departures from normality but no instability. Subset analysis gives V-containing $k_\text{HP} \approx 1269$ vs.\ V-free $\approx 299$~MPa$\cdot\mu$m$^{1/2}$ with overlapping confidence intervals, and Simpson's-paradox screening shows only 8\% attenuation of the V--YS correlation when controlling for $d^{-1/2}$ ($r = +0.64 \to r_\text{partial} = +0.59$). The full M3 coefficient set (Table~\ref{tab:m3_coef}) is exported with standard errors and 95\% confidence intervals in the repository (\texttt{results/m3\_coefficients.csv}), together with fitted model pickles that reproduce every coefficient without re-running the analysis stack.
+The scripts \path{verified_analysis.py}, \path{main2_validation.py}, and \path{verify_sdgrain_models.py} in \path{paper_gpt/} generate the revision-specific audit files. The second script writes \path{verified_results/main2_grouped_validation.csv}, which contains the three internal protocols used in the main paper: 5-fold, LOO, and LOBO. The third writes \path{verified_results/sdgrain_m15_validation.csv}, which independently refits M3, the additive SD control, and M15. Other verified files contain the fold-contained Family~2 PCA predictions, corrected Family~5 hardness coefficients and bootstrap intervals, the cross-batch composition audit, the E1--E3 external evidence classes, the singularity audit, and a method-claim audit.
 
-\begin{table}[htb]
-\centering
-\caption{Fitted M3 coefficients (Ni-solvent reference). The $\alpha_i$ are empirical regression weights for $\sigma_0$, not physics-based SSS contributions.}
-\label{tab:m3_coef}
-\small
-\begin{tabular}{lcl}
-\toprule
-Parameter & Value & Interpretation \\
-\midrule
-$\sigma_{00}$ & 230~\si{MPa} & Intercept \\
-$\alpha_V$    & $+291$ & V strongly raises $\sigma_0$ \\
-$\alpha_{Mn}$ & $+82$  & Mn mildly raises $\sigma_0$ \\
-$\alpha_{Al}$ & $-201$ & Al lowers $\sigma_0$ vs.\ Ni \\
-$\alpha_{Co}$ & $-187$ & Co lowers $\sigma_0$ \\
-$\alpha_{Cr}$ & $-308$ & Cr lowers $\sigma_0$ \\
-$\alpha_{Cu}$ & $-334$ & Cu lowers $\sigma_0$ \\
-$\alpha_{Fe}$ & $-360$ & Fe largest negative effect \\
-$k_\text{HP}$ & $766$~MPa$\cdot\mu$m$^{1/2}$ & Constant across compositions \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Hall--Petch slope: literature context}
-Table~\ref{tab:khp_lit} places the fitted M3 slope among literature values for FCC alloys. The grain-only global fit ($k_\text{HP} \approx 1149$~MPa$\cdot\mu$m$^{1/2}$) would sit above every literature entry except ordered Al$_{0.3}$CoCrFeNi; the composition-dependent intercept of M3 returns the slope to the middle of the FCC-HEA range, confirming that the inflation was an artifact of composition--slope confounding.
-
-\begin{table}[htb]
-\centering
-\caption{Hall--Petch slope $k_\text{HP}$ in FCC alloys: literature comparison.}
-\label{tab:khp_lit}
-\small
-\begin{tabular}{lcl}
-\toprule
-Alloy & $k_\text{HP}$ (MPa$\cdot\mu$m$^{1/2}$) & Reference \\
-\midrule
-Pure Cu                       & 110  & \cite{Cordero2016} \\
-Pure Ni                       & 160  & \cite{Cordero2016} \\
-316L stainless steel          & 322  & Singh et al.\ (2002) \\
-CoCrFeMnNi                    & 494  & \cite{Otto2013} \\
-CoCrFeNi                      & 516  & Yoshida et al.\ (2019) \\
-CoCrNi                        & 265  & \cite{Yoshida2017} \\
-This work (M3, 93 FCC HEAs)   & 766  & Global constant \\
-Al$_{0.3}$CoCrFeNi (FCC)      & 824  & Gwalani et al.\ (2017) \\
-Al$_{0.3}$CoCrFeNi (ordered)  & 1014 & Gwalani et al.\ (2017) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Per-batch LOBO}
-Aggregate LOBO averages over folds of very different difficulty. Table~\ref{tab:perbatch} breaks the LOBO score down by held-out batch for the classical HP baseline and M3, together with the composition-hull containment of each held-out batch by the training batches. M3 improves on classical HP in every fold; the hardest folds (CBC, BBB) are exactly the least-covered batches.
-
-\begin{table}[htb]
-\centering
-\caption{Per-batch LOBO $R^2$ with composition-hull containment of the held-out batch.}
-\label{tab:perbatch}
-\small
-\begin{tabular}{lccccc}
-\toprule
-Held-out batch & $n_\text{test}$ & Hull cont. & HP $R^2$ & M3 $R^2$ & M3 RMSE \\
-\midrule
-BBA & 17 & 0.88 & 0.41 & 0.70 & 32.9 \\
-BBB & 9  & 0.56 & 0.14 & 0.31 & 57.7 \\
-BBC & 8  & 0.75 & 0.26 & 0.66 & 51.9 \\
-CBA & 23 & 1.00 & 0.29 & 0.42 & 44.9 \\
-CBB & 15 & 0.93 & 0.17 & 0.58 & 49.6 \\
-CBC & 21 & 0.48 & $-0.04$ & 0.41 & 60.4 \\
-\bottomrule
-\end{tabular}
-\end{table}
+Family~3 M15 OLS coefficients, information criteria, and grouped-CV scores are reproducible from the prepared dataset. Its earlier Bayesian stacking weight and PSIS-LOO comparison remain archival because that probabilistic analysis was not regenerated. The Family~4 nested ARMOTE-CV table remains archival because the raw folds and optimization objects are absent. Family~5 PySR remains exploratory until equation discovery is repeated within every outer training split. Full-data loadings, feature rankings, and symbolic search fronts are descriptive and should not be substituted for held-out performance.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
-
 \end{document}

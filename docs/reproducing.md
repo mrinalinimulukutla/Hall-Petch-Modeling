@@ -1,59 +1,74 @@
 # Reproducing the analysis
 
-Everything regenerable in this repository is driven by the `Makefile`; run
-`make help` for the annotated target list. This page gives the canonical
-stage order for a full end-to-end reproduction from raw data (~85 min on a
-laptop, excluding the optional expensive controls), and what each stage must
-produce before the next one starts.
-
-All scripts read paths from `scripts/_config.py` — nothing depends on the
-current working directory, and cloning the repo anywhere works unchanged.
-
-## Environment
+Everything derives from one input: `data/raw/Grain_Size_Summary_v3.xlsx`
+(94 rows, 19 columns). Each stage writes CSVs to `results/` and figures to
+`analysis_plots/` and `paper/figures/`.
 
 ```bash
-make install          # pip install -r requirements.txt
-make test             # verify the pre-computed state before touching anything
+pip install -r requirements.txt
+make test          # fastest useful check: ~1 s, recomputes every headline value
 ```
-
-Notes on optional dependencies: `make bayesian` needs PyMC + ArviZ;
-`make pysr` needs Julia (PySR installs it on first run); `make sisso` uses
-TorchSISSO (pure Python, no Julia). All other stages run on the core
-scientific stack.
 
 ## Stage order
 
 | # | Stage | Command | Time | Key outputs |
 |---|-------|---------|------|-------------|
-| 0 | Descriptors + feature ladder | `make data` | ~1 min | `data/derived/{data_with_descriptors,data_with_vlc,inputs}.csv` |
-| 0b | Pre-modeling diagnostics | `make diagnostics` | ~1 min | hull overlap, noise ceiling, within-replicate k_HP |
-| 1 | Grain-size scaling laws | `make scaling` | ~5 min | scaling-law comparison CSVs |
-| 1b | Bayesian scaling comparison | `make bayesian` | ~10 min | `bayesian_model_comparison.csv` |
-| 2 | SSS audit | `make sss pca-ols` | ~3 min | SSS benchmark + PCA-OLS CSVs |
-| 3 | Composition-HP hierarchy | `make comp-hp export-models` | ~5 min | `comp_hp_model_comparison.csv`, M15 comparison, model pickles |
-| 4 | Non-linear ML | `make ml fair` | ~35 min | 17-model panel, fair-comparison CSVs |
-| 5 | Symbolic regression | `make symbolic` | ~25 min | SISSO/PySR/EML results, HV elbow refit |
-| 6 | Validation floor | `make cv-comparison external audit bootstrap-sr per-batch-lobo mc-grain vif ceiling` | ~5 min | external RMSEs, singularity audit, bootstrap CIs |
-| 7 | Hardness/Tabor | `make hardness` | ~2 min | C_eff, HV scaling, rank analysis |
-| 8 | Unified table | `make unified` | ~10 s | `unified_model_table.csv` |
-| 9 | Figures | `make figures` | ~2 min | `paper/figures/`, `analysis_plots/` |
-| 10 | Documents | `make all` | ~5 min | paper PDFs, notebook, report |
+| 0 | Descriptors and feature ladder | `make data` | ~1 min | `data/derived/*.csv` |
+| 0b | Pre-modelling diagnostics | `make diagnostics` | ~1 min | hull overlap, within-replicate slopes |
+| 1 | Grain-size scaling laws | `make family1` | ~5 min | scaling-law comparison |
+| 1b | Bayesian comparison *(archival)* | `make bayesian` | ~10 min | needs PyMC; see below |
+| 2 | SSS benchmark and redundancy | `make family2 pca` | ~3 min | SSS table, fold-contained PCA-OLS |
+| 3 | M-model hierarchy | `make family3 sdgrain export-models` | ~5 min | `sdgrain_m15_validation.csv`, coefficients |
+| 4 | Non-linear ML | `make fair` | ~5 min | matched-input comparison |
+| 4b | Tuned panel *(slow)* | `make family4` | ~35 min | legacy leaderboard, SHAP |
+| 5 | Symbolic regression | `make family5` | ~25 min | SISSO and PySR results (PySR needs Julia) |
+| 6 | Validation protocol | `make validation` | ~3 min | grouped CV, literature test, singularity audit |
+| 7 | Hardness / Tabor | `make hardness` | ~2 min | C_eff, HV scaling, rank analysis |
+| 8 | Figures | `make figures` | ~1 min | `paper/figures/`, `analysis_plots/` |
+| 9 | Documents | `make all` | ~5 min | report, notebook, PDFs |
+| — | Drift check | `make verify` | ~1 s | fails if the manuscript and artifacts disagree |
 
-After any stage, `make test` re-asserts the canonical values (CLAUDE.md §3);
-a failing test after a re-run means the environment, not the code, changed —
-investigate before editing anything downstream.
+A failing test after a re-run means the environment changed, not the code.
+Investigate before editing anything downstream.
 
-## Expensive optional controls
+## What is verified, and what is archival
 
-- `make armote-ladder` — ARMOTE S1–S4 summary from the shared ladder
-  (the full nested-CV ARMOTE panel with per-fold Optuna studies is archived
-  separately, ~1.5 GB).
-- `scripts/05_tier5_symbolic_regression/pysr_outer_loop_cv.py` — outer-loop
-  PySR CV, ~30 min per fold.
+The manuscript separates results that can be regenerated here from results
+that cannot.
+
+**Regenerated on demand.** The M-model hierarchy including M15, the Family 1
+baselines for both targets, fold-contained PCA-OLS, the matched-input Family 4
+comparison, the tiered literature stress test, the Tabor analysis, and the
+dataset audit. `make test` recomputes these from `data/derived` and asserts
+them against the values printed in the paper.
+
+**Archival.** Three analyses are reported as archival rather than
+confirmatory, because the artifacts needed to reproduce them were not
+retained:
+
+- **Bayesian PSIS-LOO stacking weights.** The PyMC posterior draws are gone.
+  The frequentist information criteria for the same models are recomputed.
+- **Nested ARMOTE-CV panel.** Per-fold models and Optuna studies are archived
+  separately (~1.5 GB). The manuscript uses it as secondary evidence only.
+- **Outer-loop PySR performance.** Equation structures were selected after
+  viewing complete-data search fronts, so the reported scores are
+  post-selection fixed-form CV, not unbiased symbolic-discovery estimates.
+  The manuscript labels them accordingly and does not rank them against the
+  pre-specified models.
 
 ## Determinism
 
-Fixed seeds are set inside each script. PySR is evolutionary and can return
-different (equally scoring) expressions across runs; the elbow/accuracy
-selections and their cross-validated metrics are what the regression tests
-lock, not the expression strings. SISSO reruns are deterministic.
+Seeds are fixed inside each script (5-fold uses seed 42). SISSO reruns are
+deterministic. PySR is evolutionary and can return different, equally scoring
+expressions between runs; what the tests lock is the cross-validated
+performance of the *reported* structures, not the expression strings.
+
+## Environment
+
+`requirements.txt` pins the analysis stack. Two optional extras:
+
+- `pymc` and `arviz` for stage 1b
+- Julia and `pysr` for the PySR grid
+
+Neither is needed for `make test`, `make figures`, `make report` or
+`make paper`.

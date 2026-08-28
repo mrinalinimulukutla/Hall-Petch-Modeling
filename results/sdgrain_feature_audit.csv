@@ -1,0 +1,12 @@
+audit,target_or_term,model_or_statistic,protocol,value
+linear grain-width control,YS,d^-1/2 only,LOO,0.40597420252879757
+linear grain-width control,YS,d^-1/2 only,LOBO,0.37252256179792287
+linear grain-width control,YS,d^-1/2 + additive SD_grain,LOO,0.4511752705330825
+linear grain-width control,YS,d^-1/2 + additive SD_grain,LOBO,0.39360691391078695
+linear grain-width control,HV,d^-1/2 only,LOO,0.13561772343698708
+linear grain-width control,HV,d^-1/2 only,LOBO,-0.07705247841890728
+linear grain-width control,HV,d^-1/2 + additive SD_grain,LOO,0.2317372987791524
+linear grain-width control,HV,d^-1/2 + additive SD_grain,LOBO,-0.17601146968292558
+campaign separation,HoldTime,direction-invariant ROC AUC,B versus C,1.0
+campaign separation,dH_mix/HoldTime^2,direction-invariant ROC AUC,B versus C,0.9699757869249395
+campaign separation,(6.93-d)/SD_grain,direction-invariant ROC AUC,B versus C,0.5331719128329298

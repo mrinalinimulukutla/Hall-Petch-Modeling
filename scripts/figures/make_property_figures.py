@@ -16,14 +16,12 @@ from scipy import stats
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from _config import REPO_ROOT, DATA_DIR, RAW_DATA_DIR, RESULTS_DIR, PLOTS_DIR, PAPER_DIR, PAPER_FIG_DIR
+import _figstyle as S
+S.apply()
 BASE = str(REPO_ROOT)
 BATCHES = ["BBA", "BBB", "BBC", "CBA", "CBB", "CBC"]
-BATCH_COLORS = {
-    "BBA": "#1f4e79", "BBB": "#2e75b6", "BBC": "#5b9bd5",
-    "CBA": "#a5392c", "CBB": "#c55a11", "CBC": "#ed7d31",
-}
-MARKERS = {"BBA": "o", "BBB": "s", "BBC": "^",
-           "CBA": "o", "CBB": "s", "CBC": "^"}
+BATCH_COLORS = {b: c for b, (c, _) in S.BATCH.items()}
+MARKERS = {b: m for b, (_, m) in S.BATCH.items()}
 
 df = pd.read_csv(f"{DATA_DIR}/data_with_descriptors.csv").dropna(subset=["YS"]).reset_index(drop=True)
 print(f"Loaded {len(df)} alloys")
@@ -31,7 +29,7 @@ print(f"Loaded {len(df)} alloys")
 # ============================================================
 # Option 3: pairwise property scatter
 # ============================================================
-fig, axes = plt.subplots(1, 3, figsize=(14, 4.6))
+fig, axes = plt.subplots(1, 3, figsize=(S.W_FULL, 2.45))
 
 # (a) YS vs HV
 ax = axes[0]
@@ -44,11 +42,11 @@ for batch in BATCHES:
                c=BATCH_COLORS[batch], marker=MARKERS[batch],
                s=55, alpha=0.8, edgecolors="k", linewidth=0.4, label=batch)
 r_hv = df[mask_hv][["HV", "YS"]].corr().iloc[0, 1]
-ax.set_xlabel("Vickers hardness HV", fontsize=11)
-ax.set_ylabel("Yield strength YS (MPa)", fontsize=11)
-ax.set_title(f"(a) YS vs HV   (Pearson r = {r_hv:.2f})", fontsize=11, loc="left")
+ax.set_xlabel("Vickers hardness HV")
+ax.set_ylabel("Yield strength YS (MPa)")
+ax.set_title(f"(a) YS vs HV   (Pearson r = {r_hv:.2f})", loc="left")
 ax.grid(True, alpha=0.3)
-ax.legend(fontsize=8, ncol=2, loc="lower right", framealpha=0.9)
+ax.legend(ncol=2, loc="lower right", framealpha=0.9)
 
 # (b) YS vs d^(-1/2)  — Hall-Petch
 ax = axes[1]
@@ -63,11 +61,11 @@ slope, intercept, r_ys, p_ys, _ = stats.linregress(df["d_inv_sqrt"], df["YS"])
 xfit = np.linspace(df["d_inv_sqrt"].min(), df["d_inv_sqrt"].max(), 50)
 ax.plot(xfit, intercept + slope * xfit, "k--", lw=1.5,
         label=f"HP fit: $R^2$ = {r_ys**2:.2f}")
-ax.set_xlabel(r"$d^{-1/2}$ ($\mu m^{-1/2}$)", fontsize=11)
-ax.set_ylabel("Yield strength YS (MPa)", fontsize=11)
-ax.set_title(f"(b) Hall-Petch (YS)", fontsize=11, loc="left")
+ax.set_xlabel(r"$d^{-1/2}$ ($\mu m^{-1/2}$)")
+ax.set_ylabel("Yield strength YS (MPa)")
+ax.set_title(f"(b) Hall-Petch (YS)", loc="left")
 ax.grid(True, alpha=0.3)
-ax.legend(fontsize=8, loc="upper left", framealpha=0.9)
+ax.legend(loc="upper left", framealpha=0.9)
 
 # (c) HV vs d^(-1/2)
 ax = axes[2]
@@ -82,13 +80,11 @@ slope_h, intercept_h, r_hv2, _, _ = stats.linregress(
     df.loc[mask_hv, "d_inv_sqrt"], df.loc[mask_hv, "HV"])
 ax.plot(xfit, intercept_h + slope_h * xfit, "k--", lw=1.5,
         label=f"HP fit: $R^2$ = {r_hv2**2:.2f}")
-ax.set_xlabel(r"$d^{-1/2}$ ($\mu m^{-1/2}$)", fontsize=11)
-ax.set_ylabel("Vickers hardness HV", fontsize=11)
-ax.set_title(f"(c) Hall-Petch (HV)", fontsize=11, loc="left")
+ax.set_xlabel(r"$d^{-1/2}$ ($\mu m^{-1/2}$)")
+ax.set_ylabel("Vickers hardness HV")
+ax.set_title(f"(c) Hall-Petch (HV)", loc="left")
 ax.grid(True, alpha=0.3)
-ax.legend(fontsize=8, loc="upper left", framealpha=0.9)
-
-plt.tight_layout()
+ax.legend(loc="upper left", framealpha=0.9)
 plt.savefig(f"{PAPER_FIG_DIR}/fig_property_pairwise.png", dpi=200, bbox_inches="tight")
 plt.close()
 print("Saved: paper/figures/fig_property_pairwise.png")
@@ -120,7 +116,7 @@ def stacked_hist(ax, col, bins, xlabel, log_x=False):
         ax.grid(True, alpha=0.3, axis="y", which="both")
     else:
         ax.grid(True, alpha=0.3, axis="y")
-    ax.legend(fontsize=9, ncol=2, framealpha=0.9)
+    ax.legend(ncol=2, framealpha=0.9)
 
 # (a) YS histogram
 ax = axes[0, 0]
@@ -173,9 +169,7 @@ ax.set_ylabel("Number of alloys", fontsize=12)
 ax.set_title(f"(d) Tabor ratio distribution   ({mean_c:.2f} $\\pm$ {std_c:.2f})",
              fontsize=12, loc="left")
 ax.grid(True, alpha=0.3, axis="y")
-ax.legend(fontsize=9, ncol=2, framealpha=0.9)
-
-plt.tight_layout()
+ax.legend(ncol=2, framealpha=0.9)
 plt.savefig(f"{PAPER_FIG_DIR}/fig_property_histograms.png", dpi=200, bbox_inches="tight")
 plt.close()
 print("Saved: paper/figures/fig_property_histograms.png")

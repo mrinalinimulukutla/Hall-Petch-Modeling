@@ -1,0 +1,6 @@
+result_family,current_evidence,allowed_claim,prohibited_claim
+PySR grid,full-data equation search followed by fold-wise constant refit,post-selection fixed-form CV,nested out-of-sample symbolic discovery
+M15,cached elpd only; source streams absent,provisional archival result,fully reproducible headline model
+PCA-OLS,recomputed with scaling and PCA inside every fold,fold-contained PCA baseline,descriptor-only model; processing variables are included
+External YS,"54 measured, 3 HP-derived, 25 HV-converted targets",tiered external stress test,82 independent measured YS observations or demonstrated deployment
+Singularity audit,observed-range checks for four registered equations,targeted domain and denominator audit,convex-hull sweep of every discovered equation

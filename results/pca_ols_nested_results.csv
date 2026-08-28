@@ -1,0 +1,4 @@
+model,protocol,preprocessing,features,R2,RMSE,n
+PCA-OLS,5-fold,StandardScaler and PCA fit within every training fold,VEC+dH_mix+dS_mix+Omega+delta_chi+delta+d_inv_sqrt+ColdWork+RecrystT+HoldTime+SD_GS,0.46152926547519335,59.520722137766285,93
+PCA-OLS,LOO,StandardScaler and PCA fit within every training fold,VEC+dH_mix+dS_mix+Omega+delta_chi+delta+d_inv_sqrt+ColdWork+RecrystT+HoldTime+SD_GS,0.4800498425469961,58.488165035782494,93
+PCA-OLS,LOBO,StandardScaler and PCA fit within every training fold,VEC+dH_mix+dS_mix+Omega+delta_chi+delta+d_inv_sqrt+ColdWork+RecrystT+HoldTime+SD_GS,0.3619266847275694,64.79215584180959,93

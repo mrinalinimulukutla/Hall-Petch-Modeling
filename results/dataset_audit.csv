@@ -1,0 +1,2 @@
+n_total,n_YS,n_HV,n_unique_compositions_all,n_unique_compositions_YS,n_repeated_composition_groups,n_rows_in_repeated_groups,n_compositions_crossing_batches,C_campaign_hold_min_h,C_campaign_hold_max_h,corr_mean_d_SD_GS,YS_min_MPa,YS_max_MPa,HV_min,HV_max,d_min_um,d_max_um
+94,93,94,82,81,9,21,1,1.0,8.0,0.80063680576861,151.5,544.5,57.6188675317657,227.513333333333,14.66,211.75
