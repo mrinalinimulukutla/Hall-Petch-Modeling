@@ -1,0 +1,3 @@
+[submodule "scripts/04_family4_nonlinear_ml/ARMOTE-CV-MPEA-Hall-Petch"]
+	path = scripts/04_family4_nonlinear_ml/ARMOTE-CV-MPEA-Hall-Petch
+	url = https://github.com/Shakti-95/ARMOTE-CV-MPEA-Hall-Petch.git

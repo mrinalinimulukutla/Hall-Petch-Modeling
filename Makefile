@@ -66,9 +66,18 @@ export-models:  ## Fitted-model pickles and coefficient tables
 
 # ---------------- family 4: non-linear ML ----------------
 
-family4:  ## Tuned panel and SHAP (slow)
-	$(PY) $(S)/04_family4_nonlinear_ml/exhaustive_model_search.py
-	$(PY) $(S)/04_family4_nonlinear_ml/xgboost_shap_analysis.py
+# ARMOTE-CV panel (nested, per-fold Optuna tuning). NNR is excluded here since
+# it needs tensorflow, not in requirements.txt; run it separately with -m NNR
+# if you have tensorflow installed. LOO is left as a manual/documented step
+# (docs/reproducing.md) since it can take hours; 5-fold and LOBO are the
+# fast-enough protocols to wire into `make`.
+ARMOTE_MODELS := LinearRegression BayesianRidge SVR DecisionTree RandomForest XGBoost GPR \
+                 Ridge Lasso ElasticNet KernelRidge ExtraTrees GradientBoosting LightGBM \
+                 CatBoost MLP PCA_OLS Dummy Stacking
+
+family4:  ## ARMOTE-CV nested panel: 5-fold + LOBO (slow; LOO is a separate manual step)
+	$(PY) $(S)/04_family4_nonlinear_ml/run_5fold.py -m $(ARMOTE_MODELS)
+	$(PY) $(S)/04_family4_nonlinear_ml/run_lobo.py -m $(ARMOTE_MODELS)
 
 fair:  ## Matched-input comparison at fixed settings, zero tuning
 	$(PY) $(S)/04_family4_nonlinear_ml/fair_comparison.py
